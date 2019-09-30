@@ -15,5 +15,5 @@ export interface FileIconProps {
   type?: string;
   key?: string;
   parentPath?: string;
-  filename?: string;
+  filename: string;
 }

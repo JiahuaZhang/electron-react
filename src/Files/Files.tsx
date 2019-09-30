@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Tab, Tabs, Grommet, Grid, Box } from 'grommet';
+import { Tab, Tabs, Grommet, Grid, Box, Text, Layer, Button } from 'grommet';
+import { FormClose, StatusWarning } from 'grommet-icons';
 import FileIcon from 'react-file-icon';
 import path from 'path';
 
@@ -22,7 +23,7 @@ const getNav = (directory: string): string[] => {
 const getFileInfo = (location: string, filename: string): Promise<FileIconProps> => {
   const promise = new Promise<FileIconProps>((resolve, reject) => {
     const directory = path.join(location, filename);
-    let result: FileIconProps = {};
+    let result = {} as FileIconProps;
 
     fs.stat(directory, (err, stat) => {
       if (err) {
@@ -60,15 +61,24 @@ const getFileInfo = (location: string, filename: string): Promise<FileIconProps>
 export const Files: React.FC<Props> = ({ directory = '/' }) => {
   const [state, setState] = useState([] as any[]);
   const [index, setIndex] = useState(0);
+  const [error, setError] = useState(null as (Error | null));
+
+  useEffect(() => adjustDirectory(directory), [directory]);
+
+  useEffect(() => {
+    if (error instanceof Error) {
+      console.log(error.message);
+    }
+  }, [error]);
 
   const adjustDirectory = (directory: string) => {
     const init_state = getNav(directory).map((tab: string) => ({ tab, files: [] }));
     setState(init_state);
     setIndex(init_state.length - 1);
 
-    fs.readdir(directory, (err: any, files: string[]) => {
+    fs.readdir(directory, (err: Error, files: string[]) => {
       if (err) {
-        throw err;
+        return setError(err);
       }
 
       Promise.all(files.map((f: string) => getFileInfo(directory, f))).then((data: FileIconProps[]) => {
@@ -81,8 +91,6 @@ export const Files: React.FC<Props> = ({ directory = '/' }) => {
     });
   };
 
-  useEffect(() => adjustDirectory(directory), [directory]);
-
   const navigate = (index: number) => {
     const array = state.slice(0, index + 1).map(({ tab }) => tab);
     let dir: string;
@@ -92,9 +100,9 @@ export const Files: React.FC<Props> = ({ directory = '/' }) => {
       dir = array.join('/');
     }
 
-    fs.readdir(dir, async (err: any, files: string[]) => {
+    fs.readdir(dir, async (err: Error, files: string[]) => {
       if (err) {
-        throw err;
+        return setError(err);
       }
 
       Promise.all(files.map((f: string) => getFileInfo(dir, f))).then((data: FileIconProps[]) => {
@@ -121,6 +129,7 @@ export const Files: React.FC<Props> = ({ directory = '/' }) => {
     return (
       <Box onClick={() => handleFileIconClick(rest)} key={`${index}-${key}`}>
         <FileIcon {...rest} size={60} />
+        <Text size="xsmall">{rest.filename && rest.filename.length > 7 && rest.filename}</Text>
       </Box>
     );
   };
@@ -133,10 +142,35 @@ export const Files: React.FC<Props> = ({ directory = '/' }) => {
           color: '#ec8093'
         }
       }}>
+      {error && (
+        <Layer
+          onEsc={() => setError(null)}
+          onClickOutside={() => setError(null)}
+          position="top"
+          modal={true}
+          margin={{ vertical: 'medium', horizontal: 'small' }}
+          responsive={true}
+          plain>
+          <Box
+            direction="row"
+            gap="xsmall"
+            round="medium"
+            elevation="medium"
+            pad={{ vertical: 'xsmall', horizontal: 'small' }}
+            background="status-warning">
+            <Box align="center" direction="row" gap="xsmall">
+              <StatusWarning color="light-2" />
+              <Text color="light-2">{error.message}</Text>
+              <Button icon={<FormClose color="light-2" />} plain onClick={() => setError(null)} />
+            </Box>
+          </Box>
+        </Layer>
+      )}
+
       <Tabs justify="start" onActive={navigate} activeIndex={index}>
         {state.map(({ tab, files }) => (
           <Tab key={tab} title={tab}>
-            <Grid columns="xsmall" gap="xsmall">
+            <Grid columns="xsmall" gap="small">
               {files.map((f: FileIconProps, index: number) => {
                 return renderFileIcon(f, index);
               })}
