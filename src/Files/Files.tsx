@@ -9,6 +9,7 @@ import { FileIconProps } from '../model/FileIcon';
 
 interface Props {
   directory?: string;
+  openFileHandlers?: { matcher: (filename: string) => boolean; processor: (directory: string) => void }[];
 }
 
 const fs = window.require('fs');
@@ -58,7 +59,7 @@ const getFileInfo = (location: string, filename: string): Promise<FileIconProps>
   return promise;
 };
 
-export const Files: React.FC<Props> = ({ directory = '/' }) => {
+export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) => {
   const [state, setState] = useState([] as any[]);
   const [index, setIndex] = useState(0);
   const [error, setError] = useState(null as (Error | null));
@@ -121,8 +122,16 @@ export const Files: React.FC<Props> = ({ directory = '/' }) => {
     const { type, parentPath, filename } = info;
 
     if (type && type === 'document') {
-      adjustDirectory(path.join(parentPath as string, filename as string));
+      return adjustDirectory(path.join(parentPath as string, filename as string));
     }
+
+    if (!openFileHandlers) return;
+
+    openFileHandlers.forEach(({ matcher, processor }) => {
+      if (matcher(info.filename)) {
+        processor(path.join(info.parentPath, info.filename));
+      }
+    });
   };
 
   const renderFileIcon = ({ key, ...rest }: FileIconProps, index: number) => {

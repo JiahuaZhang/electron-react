@@ -14,6 +14,6 @@ export interface FileIconProps {
   size?: number;
   type?: string;
   key?: string;
-  parentPath?: string;
+  parentPath: string;
   filename: string;
 }
