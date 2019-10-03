@@ -5,7 +5,7 @@ import FileIcon from 'react-file-icon';
 import path from 'path';
 
 import extensions from './extensions';
-import { FileIconProps } from '../model/FileIcon';
+import { FileIconProps } from '../../model/FileIcon';
 
 interface Props {
   directory?: string;

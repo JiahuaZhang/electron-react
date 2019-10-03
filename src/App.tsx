@@ -1,7 +1,7 @@
 import React from 'react';
 
 import './App.sass';
-import { Files } from './Files/Files';
+import { Files } from './Component/Files/Files';
 
 const App: React.FC = () => {
   return (
