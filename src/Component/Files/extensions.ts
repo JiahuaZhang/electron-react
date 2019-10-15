@@ -1,6 +1,6 @@
-export const audio = ['mp3', 'wav', 'aac', 'ogg', 'flac'];
+const audio = ['mp3', 'wav', 'aac', 'ogg', 'flac'];
 
-export const code = [
+const code = [
   'js',
   'ts',
   'jsx',
@@ -43,14 +43,31 @@ export const code = [
   'yml'
 ];
 
-export const compressed = ['zip', 'tar', 'rar', 'jar', 'war'];
+const compressed = ['zip', 'tar', 'rar', 'jar', 'war'];
 
-export const font = ['otf', 'ttf', 'fnt'];
+const font = ['otf', 'ttf', 'fnt'];
 
-export const image = ['tiff', 'png', 'jpg', 'jpeg', 'gif', 'psd', 'eps', 'ai'];
+const image = ['tiff', 'png', 'jpg', 'jpeg', 'gif', 'psd', 'eps', 'ai'];
 
-export const spreadsheet = ['docx', 'xls', 'xlt', 'xlm', 'xlsx', 'xlsm', 'xltx', 'ppt', 'pptx', 'pub', 'xps'];
+const spreadsheet = ['docx', 'xls', 'xlt', 'xlm', 'xlsx', 'xlsm', 'xltx', 'ppt', 'pptx', 'pub', 'xps'];
 
-export const video = ['mp4', 'webm', 'mkv', 'flv', 'vob', 'ogv', 'ogg', 'avi', 'wmv', 'rm', 'rmvb', 'mpg', '3gp', ''];
+const video = ['mp4', 'webm', 'mkv', 'flv', 'vob', 'ogv', 'ogg', 'avi', 'wmv', 'rm', 'rmvb', 'mpg', '3gp', ''];
 
-export default { audio, code, compressed, font, image, spreadsheet, video };
+export const getType = (filename: string): string => {
+  const name = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+  const mapping = {};
+
+  Object.entries({
+    audio,
+    code,
+    compressed,
+    font,
+    image,
+    spreadsheet,
+    video
+  }).forEach(([key, values]) => {
+    values.forEach(value => (mapping[value] = key));
+  });
+
+  return mapping[name];
+};

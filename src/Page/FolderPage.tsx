@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Box } from 'grommet';
-import { Add } from 'grommet-icons';
+import { Button, Box, Grid } from 'grommet';
+import { Add, Close } from 'grommet-icons';
 
 import { Files } from '../Component/Files/Files';
 import { ePub } from '../extension/ePub/ePub';

@@ -4,7 +4,7 @@ import { FormClose, StatusWarning } from 'grommet-icons';
 import FileIcon from 'react-file-icon';
 import path from 'path';
 
-import extensions from './extensions';
+import { getType } from './extensions';
 import { FileIconProps } from '../../model/FileIcon';
 
 interface Props {
@@ -21,42 +21,24 @@ const getNav = (directory: string): string[] => {
   return directory ? [path.sep, ...directory.split(path.sep)] : [path.sep];
 };
 
-const getFileInfo = (location: string, filename: string): Promise<FileIconProps> => {
-  const promise = new Promise<FileIconProps>((resolve, reject) => {
-    const directory = path.join(location, filename);
-    let result = {} as FileIconProps;
+const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: () => boolean }): FileIconProps => {
+  let result = {} as FileIconProps;
 
-    fs.stat(directory, (err, stat) => {
-      if (err) {
-        reject(err);
-      }
+  result.key = dirEnt.name;
+  result.parentPath = parentPath;
+  result.filename = dirEnt.name;
 
-      result.key = directory;
-      result.parentPath = location;
-      result.filename = filename;
+  result.extension = dirEnt.name;
+  result.labelColor = '#002cffd6';
 
-      result.extension = filename;
-      result.labelColor = '#002cffd6';
+  if (dirEnt.isDirectory()) {
+    result.type = 'document';
+    result.color = '#ffc10799';
+  } else if (dirEnt.name.includes('.')) {
+    result.type = getType(dirEnt.name);
+  }
 
-      if (stat.isDirectory()) {
-        result.type = 'document';
-        result.color = '#ffc10799';
-      } else if (filename.includes('.')) {
-        const extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-
-        for (const type in extensions) {
-          if (extension in extensions[type]) {
-            result.type = type;
-            break;
-          }
-        }
-      }
-
-      resolve(result);
-    });
-  });
-
-  return promise;
+  return result;
 };
 
 export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) => {
@@ -66,29 +48,25 @@ export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) =>
 
   useEffect(() => adjustDirectory(directory), [directory]);
 
-  useEffect(() => {
-    if (error instanceof Error) {
-      console.log(error.message);
-    }
-  }, [error]);
-
   const adjustDirectory = (directory: string) => {
     const init_state = getNav(directory).map((tab: string) => ({ tab, files: [] }));
     setState(init_state);
     setIndex(init_state.length - 1);
 
-    fs.readdir(directory, (err: Error, files: string[]) => {
-      if (err) {
-        return setError(err);
-      }
+    updateTabFiles(init_state.length - 1, directory);
+  };
 
-      Promise.all(files.map((f: string) => getFileInfo(directory, f))).then((data: FileIconProps[]) => {
-        setState(prev_state => {
-          const new_state = [...prev_state];
-          new_state[new_state.length - 1].files = data;
-          return new_state;
-        });
-      });
+  const updateTabFiles = async (index: number, directory: string) => {
+    const file_names =
+      (await fs.promises
+        .readdir(directory, { withFileTypes: true })
+        .then(data => data.map(d => getFileInfo(directory, d)))
+        .catch((err: Error) => setError(err))) || [];
+
+    setState(prev_state => {
+      const new_state = [...prev_state];
+      new_state[index].files = file_names;
+      return new_state;
     });
   };
 
@@ -101,20 +79,7 @@ export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) =>
       dir = array.join('/');
     }
 
-    fs.readdir(dir, async (err: Error, files: string[]) => {
-      if (err) {
-        return setError(err);
-      }
-
-      Promise.all(files.map((f: string) => getFileInfo(dir, f))).then((data: FileIconProps[]) => {
-        setState(prev_state => {
-          const new_state = [...prev_state];
-          new_state[index].files = data;
-          return new_state;
-        });
-      });
-    });
-
+    updateTabFiles(index, dir);
     setIndex(index);
   };
 
