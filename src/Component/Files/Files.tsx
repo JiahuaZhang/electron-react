@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tab, Tabs, Grommet, Grid, Box, Text, Layer, Button } from 'grommet';
 import { FormClose, StatusWarning } from 'grommet-icons';
 import FileIcon from 'react-file-icon';
@@ -46,15 +46,15 @@ export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) =>
   const [index, setIndex] = useState(0);
   const [error, setError] = useState(null as (Error | null));
 
-  useEffect(() => adjustDirectory(directory), [directory]);
-
-  const adjustDirectory = (directory: string) => {
+  const adjustDirectory = useCallback((directory: string) => {
     const init_state = getNav(directory).map((tab: string) => ({ tab, files: [] }));
     setState(init_state);
     setIndex(init_state.length - 1);
 
     updateTabFiles(init_state.length - 1, directory);
-  };
+  }, []);
+
+  useEffect(() => adjustDirectory(directory), [directory, adjustDirectory]);
 
   const updateTabFiles = async (index: number, directory: string) => {
     const file_names =
@@ -87,7 +87,7 @@ export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) =>
     const { type, parentPath, filename } = info;
 
     if (type && type === 'document') {
-      return adjustDirectory(path.join(parentPath as string, filename as string));
+      return adjustDirectory(path.join(parentPath, filename));
     }
 
     if (!openFileHandlers) return;
