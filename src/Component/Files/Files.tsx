@@ -61,7 +61,7 @@ export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) =>
       (await fs.promises
         .readdir(directory, { withFileTypes: true })
         .then(data => data.map(d => getFileInfo(directory, d)))
-        .catch((err: Error) => setError(err))) || [];
+        .catch(setError)) || [];
 
     setState(prev_state => {
       const new_state = [...prev_state];
