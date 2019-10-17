@@ -6,10 +6,11 @@ import path from 'path';
 
 import { getType } from './extensions';
 import { FileIconProps } from '../../model/FileIcon';
+import { FileHandler } from '../../extension/FileHandler';
 
 interface Props {
   directory?: string;
-  openFileHandlers?: { matcher: (filename: string) => boolean; processor: (directory: string) => void }[];
+  FileHandlers?: FileHandler[];
 }
 
 const fs = window.require('fs');
@@ -41,7 +42,7 @@ const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: ()
   return result;
 };
 
-export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) => {
+export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
   const [state, setState] = useState([] as any[]);
   const [index, setIndex] = useState(0);
   const [error, setError] = useState(null as (Error | null));
@@ -90,9 +91,9 @@ export const Files: React.FC<Props> = ({ directory = '/', openFileHandlers }) =>
       return adjustDirectory(path.join(parentPath, filename));
     }
 
-    if (!openFileHandlers) return;
+    if (!FileHandlers) return;
 
-    openFileHandlers.forEach(({ matcher, processor }) => {
+    FileHandlers.forEach(({ matcher, processor }) => {
       if (matcher(info.filename)) {
         processor(path.join(info.parentPath, info.filename));
       }

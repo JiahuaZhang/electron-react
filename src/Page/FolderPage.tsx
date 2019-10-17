@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Box, Grid } from 'grommet';
 import { Add, Close } from 'grommet-icons';
 
 import { Files } from '../Component/Files/Files';
-import { ePub } from '../extension/ePub/ePub';
+import { FileHandler } from '../extension/FileHandler';
 
-interface Props {}
+interface Props {
+  FileHandlers?: FileHandler[];
+}
 
-export const FolderPage: React.FC<Props> = () => {
-  const [state, setState] = useState([<Files openFileHandlers={[ePub]} />]);
+export const FolderPage: React.FC<Props> = ({ FileHandlers }) => {
+  const [state, setState] = useState([<Files FileHandlers={FileHandlers} />]);
 
-  useEffect(() => {
-    console.log('state changed?');
-  }, [state]);
-
-  const newFolderPanel = () => setState(prev => prev.concat(<Files openFileHandlers={[ePub]} />));
+  const newFolderPanel = () => setState(prev => prev.concat(<Files FileHandlers={FileHandlers} />));
 
   const removePanel = (panel: JSX.Element) => setState(prevState => prevState.filter(s => s !== panel));
 
