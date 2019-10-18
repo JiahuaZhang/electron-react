@@ -6,7 +6,7 @@ import path from 'path';
 
 import { getType } from './extensions';
 import { FileIconProps } from '../../model/FileIcon';
-import { FileHandler } from '../../extension/FileHandler';
+import { FileHandler } from '../../model/FileHandler';
 
 interface Props {
   directory?: string;

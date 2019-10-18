@@ -3,7 +3,7 @@ import { Button, Box, Grid } from 'grommet';
 import { Add, Close } from 'grommet-icons';
 
 import { Files } from '../Component/Files/Files';
-import { FileHandler } from '../extension/FileHandler';
+import { FileHandler } from '../model/FileHandler';
 
 interface Props {
   FileHandlers?: FileHandler[];
