@@ -6,7 +6,7 @@ import { renderer } from '../../model/renderer';
 
 const epub = window.require('epub');
 
-export const ePub = (renderer: renderer): FileHandler => {
+export const ePub = (displayer: renderer): FileHandler => {
   const matcher = (filename: string): boolean => filename.endsWith('.epub');
 
   const processor = (direcotry: string) => {
@@ -16,7 +16,7 @@ export const ePub = (renderer: renderer): FileHandler => {
       .split(path.sep)
       .slice(-1)[0]
       .split(/.epub/i)[0];
-    renderer(book_name, <div>in progress</div>);
+    displayer(book_name, <div>in progress</div>);
   };
 
   return {
