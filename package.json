@@ -9,6 +9,7 @@
     "@types/node": "12.7.5",
     "@types/react": "16.9.2",
     "@types/react-dom": "16.9.0",
+    "antd": "^3.24.2",
     "cross-env": "^5.2.1",
     "electron-is-dev": "^1.1.0",
     "epub": "^1.1.0",

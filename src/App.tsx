@@ -1,43 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Tabs } from 'antd';
+import 'antd/dist/antd.css';
 
 import './App.sass';
 import { FolderPage } from './Page/FolderPage';
-import { Tabs, Tab, Grid } from 'grommet';
 import { ePub } from './extension/ePub/ePub';
 import { renderer } from './model/renderer';
 
-const App: React.FC = () => {
-  const [tabs, setTabs] = useState([] as { tab: string; content: JSX.Element }[]);
-  const [tabIndex, setTabIndex] = useState(0);
+const { TabPane } = Tabs;
 
-  const addTab: renderer = async (tab: string, content: JSX.Element) => {
+const App: React.FC = () => {
+  const [tabs, setTabs] = useState([] as { title: string; content: JSX.Element; key: number }[]);
+  const id = useRef(0);
+  const [activeKey, setActiveKey] = useState('0');
+
+  const addTab: renderer = async (title: string, content: JSX.Element) => {
     setTabs(prev_state => {
-      setTabIndex(prev_state.length);
+      setActiveKey(id.current.toString());
       return prev_state.concat({
-        tab,
-        content
+        title,
+        content,
+        key: id.current++
       });
     });
   };
 
   useEffect(() => {
-    setTabs([{ tab: 'FolderPage', content: <FolderPage FileHandlers={[ePub(addTab)]} /> }]);
+    setTabs([{ title: 'FolderPage', content: <FolderPage FileHandlers={[ePub(addTab)]} />, key: -1 }]);
   }, []);
 
-  return (
-    <>
-      {tabs.length === 1 ? (
-        tabs[0].content
-      ) : (
-        <Tabs activeIndex={tabIndex} onActive={index => setTabIndex(index)}>
-          {tabs.map(({ tab, content }, index) => (
-            <Tab title={tab} key={index}>
-              <Grid>{content}</Grid>
-            </Tab>
-          ))}
-        </Tabs>
-      )}
-    </>
+  const onEdit = (targetKey: string | React.MouseEvent<HTMLElement>, action: 'add' | 'remove'): void => {
+    if (action === 'add') {
+      setTabs(tabs =>
+        tabs.concat({
+          title: 'FolderPage',
+          content: <FolderPage FileHandlers={[ePub(addTab)]} />,
+          key: id.current++
+        })
+      );
+    } else if (action === 'remove') {
+      setTabs(tabs => tabs.filter(({ key }) => key.toString() !== targetKey));
+    }
+  };
+
+  return tabs.length === 1 ? (
+    tabs[0].content
+  ) : (
+    <Tabs type="editable-card" onEdit={onEdit} activeKey={activeKey} onChange={activeKey => setActiveKey(activeKey)}>
+      {tabs.map(({ title, content, key }) => (
+        <TabPane tab={title} key={key.toString()}>
+          {content}
+        </TabPane>
+      ))}
+    </Tabs>
   );
 };
 
