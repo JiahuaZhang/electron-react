@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Tab, Tabs, Grommet, Grid, Box, Text, Layer, Button } from 'grommet';
-import { FormClose, StatusWarning } from 'grommet-icons';
+import { Tabs, Row, Col, Typography, message } from 'antd';
 import FileIcon from 'react-file-icon';
 import path from 'path';
 
 import { getType } from './extensions';
 import { FileIconProps } from '../../model/FileIcon';
 import { FileHandler } from '../../model/FileHandler';
+
+const { TabPane } = Tabs;
+const { Text } = Typography;
 
 interface Props {
   directory?: string;
@@ -44,13 +46,13 @@ const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: ()
 
 export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
   const [state, setState] = useState([] as any[]);
-  const [index, setIndex] = useState(0);
-  const [error, setError] = useState(null as (Error | null));
+  const [activeKey, setActiveKey] = useState('');
 
   const adjustDirectory = useCallback((directory: string) => {
     const init_state = getNav(directory).map((tab: string) => ({ tab, files: [] }));
     setState(init_state);
-    setIndex(init_state.length - 1);
+    const index = init_state.length - 1;
+    setActiveKey(`${init_state[index].tab}-${index}`);
 
     updateTabFiles(init_state.length - 1, directory);
   }, []);
@@ -58,11 +60,13 @@ export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
   useEffect(() => adjustDirectory(directory), [directory, adjustDirectory]);
 
   const updateTabFiles = async (index: number, directory: string) => {
-    const file_names =
-      (await fs.promises
-        .readdir(directory, { withFileTypes: true })
-        .then(data => data.map(d => getFileInfo(directory, d)))
-        .catch(setError)) || [];
+    const file_names = await fs.promises
+      .readdir(directory, { withFileTypes: true })
+      .then(data => data.map(d => getFileInfo(directory, d)))
+      .catch((err: Error) => {
+        message.error(err.message);
+        return [];
+      });
 
     setState(prev_state => {
       const new_state = [...prev_state];
@@ -71,7 +75,8 @@ export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
     });
   };
 
-  const navigate = (index: number) => {
+  const navigate = (activeKey: string) => {
+    const index = Number(activeKey.split('-')[1]);
     const array = state.slice(0, index + 1).map(({ tab }) => tab);
     let dir: string;
     if (array[0] === path.sep) {
@@ -81,7 +86,7 @@ export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
     }
 
     updateTabFiles(index, dir);
-    setIndex(index);
+    setActiveKey(activeKey);
   };
 
   const handleFileIconClick = (info: FileIconProps) => {
@@ -102,57 +107,31 @@ export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
 
   const renderFileIcon = ({ key, ...rest }: FileIconProps, index: number) => {
     return (
-      <Box onClick={() => handleFileIconClick(rest)} key={`${index}-${key}`}>
-        <FileIcon {...rest} size={60} />
-        <Text size="xsmall">{rest.filename && rest.filename.length > 7 && rest.filename}</Text>
-      </Box>
+      <Col
+        key={`${index}-${key}`}
+        onClick={() => handleFileIconClick(rest)}
+        xs={24}
+        sm={12}
+        md={8}
+        lg={6}
+        xl={4}
+        style={{ cursor: 'pointer' }}>
+        <FileIcon {...rest} size={65} />
+        <br />
+        {rest.filename && rest.filename.length > 7 && <Text>{rest.filename}</Text>}
+      </Col>
     );
   };
 
   return (
-    <Grommet
-      theme={{
-        tab: {
-          border: { color: '#ec8093' },
-          color: '#ec8093'
-        }
-      }}>
-      {error && (
-        <Layer
-          onEsc={() => setError(null)}
-          onClickOutside={() => setError(null)}
-          position="top"
-          modal={true}
-          margin={{ vertical: 'medium', horizontal: 'small' }}
-          responsive={true}
-          plain>
-          <Box
-            direction="row"
-            gap="xsmall"
-            round="medium"
-            elevation="medium"
-            pad={{ vertical: 'xsmall', horizontal: 'small' }}
-            background="status-warning">
-            <Box align="center" direction="row" gap="xsmall">
-              <StatusWarning color="light-2" />
-              <Text color="light-2">{error.message}</Text>
-              <Button icon={<FormClose color="light-2" />} plain onClick={() => setError(null)} />
-            </Box>
-          </Box>
-        </Layer>
-      )}
-
-      <Tabs justify="start" onActive={navigate} activeIndex={index}>
-        {state.map(({ tab, files }) => (
-          <Tab key={tab} title={tab}>
-            <Grid columns="xsmall" gap="small">
-              {files.map((f: FileIconProps, index: number) => {
-                return renderFileIcon(f, index);
-              })}
-            </Grid>
-          </Tab>
-        ))}
-      </Tabs>
-    </Grommet>
+    <Tabs onChange={navigate} activeKey={activeKey}>
+      {state.map(({ tab, files }, index) => (
+        <TabPane key={`${tab}-${index}`} tab={tab}>
+          <Row key={index} type="flex" justify="space-between" gutter={[{ xs: 8, sm: 16, md: 24, lg: 32 }, 20]}>
+            {files.map((f: FileIconProps, index: number) => renderFileIcon(f, index))}
+          </Row>
+        </TabPane>
+      ))}
+    </Tabs>
   );
 };
