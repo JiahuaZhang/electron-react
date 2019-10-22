@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Box, Grid } from 'grommet';
-import { Add, Close } from 'grommet-icons';
+import { Button, Row, Col } from 'antd';
 
 import { Files } from '../Component/Files/Files';
 import { FileHandler } from '../model/FileHandler';
@@ -18,21 +17,19 @@ export const FolderPage: React.FC<Props> = ({ FileHandlers }) => {
 
   return (
     <div>
-      <Box align="start" pad="xsmall">
-        <Button icon={<Add />} label="New Folder Panel" onClick={newFolderPanel} primary />
-      </Box>
-      {state.map((s, index) => (
-        <Grid key={index}>
-          <Box align="end">
-            <Button
-              icon={<Close color="white" style={{ backgroundColor: 'red', borderRadius: '50%', padding: '.25rem' }} />}
-              type="button"
-              onClick={() => removePanel(s)}
-            />
-          </Box>
-          {s}
-        </Grid>
-      ))}
+      <Row>
+        <Button type="primary" icon="plus" onClick={newFolderPanel} style={{ margin: '.75rem' }}>
+          New Foldr Panel
+        </Button>
+        {state.map((s, index) => (
+          <Col key={index}>
+            <div style={{ background: '#75ff8133', display: 'grid', justifyItems: 'end', padding: '.5rem 1rem' }}>
+              <Button onClick={() => removePanel(s)} icon="close" type="danger" shape="circle" />
+            </div>
+            {s}
+          </Col>
+        ))}
+      </Row>
     </div>
   );
 };
