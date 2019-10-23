@@ -26,7 +26,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setTabs([{ title: 'FolderPage', content: <FolderPage FileHandlers={[ePub(addTab)]} />, key: -1 }]);
+    setTabs([{ title: 'FolderPage', content: <FolderPage fileHandlers={[ePub(addTab)]} />, key: -1 }]);
   }, []);
 
   const onEdit = (targetKey: string | React.MouseEvent<HTMLElement>, action: 'add' | 'remove'): void => {
@@ -34,7 +34,7 @@ const App: React.FC = () => {
       setTabs(tabs =>
         tabs.concat({
           title: 'FolderPage',
-          content: <FolderPage FileHandlers={[ePub(addTab)]} />,
+          content: <FolderPage fileHandlers={[ePub(addTab)]} />,
           key: id.current++
         })
       );

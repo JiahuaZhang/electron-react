@@ -12,7 +12,7 @@ const { Text } = Typography;
 
 interface Props {
   directory?: string;
-  FileHandlers?: FileHandler[];
+  fileHandlers?: FileHandler[];
 }
 
 const fs = window.require('fs');
@@ -44,7 +44,7 @@ const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: ()
   return result;
 };
 
-export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
+export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
   const [state, setState] = useState([] as any[]);
   const [activeKey, setActiveKey] = useState('');
 
@@ -96,9 +96,9 @@ export const Files: React.FC<Props> = ({ directory = '/', FileHandlers }) => {
       return adjustDirectory(path.join(parentPath, filename));
     }
 
-    if (!FileHandlers) return;
+    if (!fileHandlers) return;
 
-    FileHandlers.forEach(({ matcher, processor }) => {
+    fileHandlers.forEach(({ matcher, processor }) => {
       if (matcher(info.filename)) {
         processor(path.join(info.parentPath, info.filename));
       }

@@ -5,13 +5,13 @@ import { Files } from '../Component/Files/Files';
 import { FileHandler } from '../model/FileHandler';
 
 interface Props {
-  FileHandlers?: FileHandler[];
+  fileHandlers?: FileHandler[];
 }
 
-export const FolderPage: React.FC<Props> = ({ FileHandlers }) => {
-  const [state, setState] = useState([<Files FileHandlers={FileHandlers} />]);
+export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
+  const [state, setState] = useState([<Files fileHandlers={fileHandlers} />]);
 
-  const newFolderPanel = () => setState(prev => prev.concat(<Files FileHandlers={FileHandlers} />));
+  const newFolderPanel = () => setState(prev => prev.concat(<Files fileHandlers={fileHandlers} />));
 
   const removePanel = (panel: JSX.Element) => setState(prevState => prevState.filter(s => s !== panel));
 
