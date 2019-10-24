@@ -10,6 +10,8 @@ interface metadata {
   language: string;
   publisher: string;
   title: string;
+  'calibre:author_link_map'?: string;
+  'primary-writing-mode'?: string;
 }
 
 interface manifest {
