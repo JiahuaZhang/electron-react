@@ -18,7 +18,8 @@ export const ePub = (displayer: renderer): FileHandler => {
       .split(path.sep)
       .slice(-1)[0]
       .split(/.epub/i)[0];
-    displayer(book_name, <Screen book={book} />);
+
+    book.on('end', () => displayer(book_name, <Screen book={book} />));
   };
 
   return {
