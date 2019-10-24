@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EPub } from './Book';
 
 interface Props {
@@ -12,14 +12,16 @@ const img = (data: Buffer, mimeType: string, alt: string) => (
 export const Screen: React.FC<Props> = ({ book }) => {
   const [cover, setCover] = useState(<img alt="" />);
 
-  book.getImage(book.metadata.cover, (err, data, mimeType) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
+  useEffect(() => {
+    book.getImage(book.metadata.cover, (err, data, mimeType) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
 
-    if (data) setCover(img(data, mimeType, 'cover'));
-  });
+      if (data) setCover(img(data, mimeType, 'cover'));
+    });
+  }, []);
 
   return (
     <>
