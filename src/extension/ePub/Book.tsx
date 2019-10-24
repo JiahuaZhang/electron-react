@@ -36,7 +36,7 @@ export interface EPub {
     contents: manifest[];
     toc: { href: string; title: string; type: string };
   };
-  flow: { [key: number]: manifest };
+  flow: manifest[];
   toc: TocElement[];
   containerFile: string;
   filename: string;
@@ -55,4 +55,6 @@ export interface EPub {
   getImage(id: string, callback: (error: Error, data: Buffer, mimeType: string) => void): void;
 
   getFile(id: string, callback: (error: Error, data: Buffer, mimeType: string) => void): void;
+
+  on(event: string, callback: () => void): void;
 }
