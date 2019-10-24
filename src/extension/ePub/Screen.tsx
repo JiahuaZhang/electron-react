@@ -21,7 +21,7 @@ export const Screen: React.FC<Props> = ({ book }) => {
 
       if (data) setCover(img(data, mimeType, 'cover'));
     });
-  }, []);
+  }, [book]);
 
   return (
     <>
