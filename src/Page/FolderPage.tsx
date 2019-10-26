@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Row, Col } from 'antd';
 
-import { Files } from '../Component/Files/Files';
+import { Files } from '../Components/Files/Files';
 import { fileHandler } from '../model/fileHandler';
 
 interface Props {
