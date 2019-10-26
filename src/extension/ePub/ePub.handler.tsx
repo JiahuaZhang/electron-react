@@ -3,7 +3,7 @@ import path from 'path';
 
 import { FileHandler } from '../../model/FileHandler';
 import { renderer } from '../../model/renderer';
-import { EPub } from './Book';
+import { EPub } from './Book.type';
 import { Screen } from './Screen';
 
 const epub = window.require('epub');

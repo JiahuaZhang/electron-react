@@ -23,7 +23,7 @@ interface manifest {
   title?: number;
 }
 
-interface TocElement {
+export interface TocElement {
   level: number;
   order: number;
   title: string;

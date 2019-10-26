@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { EPub } from './Book';
+import { EPub } from './Book.type';
 
 interface Props {
   book: EPub;
@@ -25,6 +25,12 @@ export const Screen: React.FC<Props> = ({ book }) => {
 
   return (
     <>
+      {book.toc.map(toc => (
+        <ul key={toc.id}>
+          <li>title: {toc.title}</li>
+          <li>level: {toc.level}</li>
+        </ul>
+      ))}
       {cover}
       <ul>
         {Object.entries(book.metadata).map(([key, value]) => (
