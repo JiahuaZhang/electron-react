@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Button, Row, Col } from 'antd';
 
 import { Files } from '../Component/Files/Files';
-import { FileHandler } from '../model/FileHandler';
+import { fileHandler } from '../model/fileHandler';
 
 interface Props {
-  fileHandlers?: FileHandler[];
+  fileHandlers?: fileHandler[];
 }
 
 export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {

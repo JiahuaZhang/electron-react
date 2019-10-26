@@ -1,14 +1,14 @@
 import React from 'react';
 import path from 'path';
 
-import { FileHandler } from '../../model/FileHandler';
+import { fileHandler } from '../../model/fileHandler';
 import { renderer } from '../../model/renderer';
-import { EPub } from './Book.type';
+import { EPub } from './book.type';
 import { Screen } from './Screen';
 
 const epub = window.require('epub');
 
-export const ePub = (displayer: renderer): FileHandler => {
+export const ePub = (displayer: renderer): fileHandler => {
   const matcher = (filename: string): boolean => filename.endsWith('.epub');
 
   const processor = (direcotry: string) => {

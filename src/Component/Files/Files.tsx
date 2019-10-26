@@ -4,15 +4,15 @@ import FileIcon from 'react-file-icon';
 import path from 'path';
 
 import { getType } from './extensions';
-import { FileIconProps } from '../../model/FileIcon';
-import { FileHandler } from '../../model/FileHandler';
+import { fileIconProps } from '../../model/fileIcon';
+import { fileHandler } from '../../model/fileHandler';
 
 const { TabPane } = Tabs;
 const { Text } = Typography;
 
 interface Props {
   directory?: string;
-  fileHandlers?: FileHandler[];
+  fileHandlers?: fileHandler[];
 }
 
 const fs = window.require('fs');
@@ -24,8 +24,8 @@ const getNav = (directory: string): string[] => {
   return directory ? [path.sep, ...directory.split(path.sep)] : [path.sep];
 };
 
-const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: () => boolean }): FileIconProps => {
-  let result = {} as FileIconProps;
+const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: () => boolean }): fileIconProps => {
+  let result = {} as fileIconProps;
 
   result.key = dirEnt.name;
   result.parentPath = parentPath;
@@ -89,7 +89,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
     setActiveKey(activeKey);
   };
 
-  const handleFileIconClick = (info: FileIconProps) => {
+  const handleFileIconClick = (info: fileIconProps) => {
     const { type, parentPath, filename } = info;
 
     if (type && type === 'document') {
@@ -105,7 +105,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
     });
   };
 
-  const renderFileIcon = ({ key, ...rest }: FileIconProps, index: number) => {
+  const renderFileIcon = ({ key, ...rest }: fileIconProps, index: number) => {
     return (
       <Col
         key={`${index}-${key}`}
@@ -128,7 +128,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
       {state.map(({ tab, files }, index) => (
         <TabPane key={`${tab}-${index}`} tab={tab}>
           <Row key={index} type="flex" justify="space-between" gutter={[{ xs: 8, sm: 16, md: 24, lg: 32 }, 20]}>
-            {files.map((f: FileIconProps, index: number) => renderFileIcon(f, index))}
+            {files.map((f: fileIconProps, index: number) => renderFileIcon(f, index))}
           </Row>
         </TabPane>
       ))}

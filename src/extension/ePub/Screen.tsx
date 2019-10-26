@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { EPub } from './Book.type';
+import { EPub } from './book.type';
 
 interface Props {
   book: EPub;
