@@ -14,6 +14,18 @@ interface content {
   children: content[];
 }
 
+const filterDuplicateContent = (contents: TocElement[]): TocElement[] => {
+  const result: TocElement[] = [];
+  const keys = new Set();
+  contents.forEach(content => {
+    if (!keys.has(content.id)) {
+      keys.add(content.id);
+      result.push(content);
+    }
+  });
+  return result;
+};
+
 const getNestedContents = (contents: TocElement[]): content[] => {
   const tracker: content[] = [];
   const result: content[] = [];
@@ -43,6 +55,6 @@ const renderContents = (content: content): JSX.Element => {
 };
 
 export const TableOfContents: React.FC<Props> = ({ tableOfContents }) => {
-  const contents = getNestedContents(tableOfContents);
+  const contents = getNestedContents(filterDuplicateContent(tableOfContents));
   return <Menu mode="inline">{contents.map(renderContents)}</Menu>;
 };
