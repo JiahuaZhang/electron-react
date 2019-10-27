@@ -40,6 +40,12 @@ const App: React.FC = () => {
       );
     } else if (action === 'remove') {
       setTabs(tabs => tabs.filter(({ key }) => key.toString() !== targetKey));
+      if (activeKey === targetKey) {
+        const first_available_tab = tabs.find(({ key }) => key.toString() !== targetKey);
+        if (first_available_tab) {
+          setActiveKey(first_available_tab.key.toString());
+        }
+      }
     }
   };
 
