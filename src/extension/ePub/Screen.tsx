@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Layout, Menu } from 'antd';
 
 import { EPub } from './book.type';
 import { TableOfContents } from './TableOfContents';
 
-interface Props {
-  book: EPub;
-}
-
+const { Header, Content, Sider } = Layout;
 const img = (data: Buffer, mimeType: string, alt: string) => (
   <img alt={alt} src={`data:${mimeType};base64, ${data.toString('base64')}`} />
 );
+
+interface Props {
+  book: EPub;
+}
 
 export const Screen: React.FC<Props> = ({ book }) => {
   const [cover, setCover] = useState(<img alt="" />);
@@ -29,16 +31,16 @@ export const Screen: React.FC<Props> = ({ book }) => {
   }, [book]);
 
   return (
-    <>
-      {tableOfContents}
-      {cover}
-      <ul>
-        {Object.entries(book.metadata).map(([key, value]) => (
-          <li key={key}>
-            {key} : {value}
-          </li>
-        ))}
-      </ul>
-    </>
+    <Layout className="header">
+      <Header>
+        <Menu mode="horizontal">
+          <Menu.Item>table of contents</Menu.Item>
+        </Menu>
+      </Header>
+      <Layout>
+        <Sider>{tableOfContents}</Sider>
+        <Content>{cover}</Content>
+      </Layout>
+    </Layout>
   );
 };
