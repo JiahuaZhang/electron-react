@@ -52,7 +52,12 @@ const App: React.FC = () => {
   return tabs.length === 1 ? (
     tabs[0].content
   ) : (
-    <Tabs type="editable-card" onEdit={onEdit} activeKey={activeKey} onChange={activeKey => setActiveKey(activeKey)}>
+    <Tabs
+      tabBarStyle={{ margin: 0 }}
+      type="editable-card"
+      onEdit={onEdit}
+      activeKey={activeKey}
+      onChange={activeKey => setActiveKey(activeKey)}>
       {tabs.map(({ title, content, key }) => (
         <TabPane tab={title} key={key.toString()}>
           {content}
