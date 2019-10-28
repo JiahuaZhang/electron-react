@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Menu } from 'antd';
 
+import './Screen.sass';
 import { EPub } from './book.type';
 import { TableOfContents } from './TableOfContents';
 
