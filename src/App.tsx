@@ -53,6 +53,8 @@ const App: React.FC = () => {
     tabs[0].content
   ) : (
     <Tabs
+      className="main"
+      style={{ height: '100vh', display: 'grid' }}
       tabBarStyle={{ margin: 0 }}
       type="editable-card"
       onEdit={onEdit}
