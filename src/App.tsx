@@ -55,10 +55,10 @@ const App: React.FC = () => {
     <Tabs
       className="main"
       style={{
-        maxHeight: '100vh',
-        maxWidth: '100vw',
+        height: '100vh',
+        width: '100vw',
         display: 'grid',
-        gridTemplateRows: 'max-content 1fr',
+        gridTemplateRows: 'repeat(2, max-content)',
         minHeight: 0,
         minWidth: 0
       }}
