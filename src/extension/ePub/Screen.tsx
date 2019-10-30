@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Icon } from 'antd';
 
 import './Screen.sass';
 import { EPub } from './book.type';
@@ -32,15 +32,24 @@ export const Screen: React.FC<Props> = ({ book }) => {
   }, [book]);
 
   return (
-    <Layout className="header">
+    <Layout
+      style={{
+        maxHeight: '100%',
+        display: 'grid',
+        gridTemplateRows: 'max-content 1fr',
+        minHeight: 0,
+        minWidth: 0
+      }}>
       <Header>
         <Menu mode="horizontal">
-          <Menu.Item>table of contents</Menu.Item>
+          <Menu.Item>
+            <Icon type="menu" />
+          </Menu.Item>
         </Menu>
       </Header>
-      <Layout>
-        <Sider>{tableOfContents}</Sider>
-        <Content>{cover}</Content>
+      <Layout style={{ overflow: 'hidden' }}>
+        <Sider style={{ overflow: 'auto' }}>{tableOfContents}</Sider>
+        <Content style={{ overflow: 'auto' }}>{cover}</Content>
       </Layout>
     </Layout>
   );

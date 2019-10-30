@@ -54,7 +54,14 @@ const App: React.FC = () => {
   ) : (
     <Tabs
       className="main"
-      style={{ height: '100vh', display: 'grid' }}
+      style={{
+        height: '100vh',
+        width: '100vw',
+        display: 'grid',
+        gridTemplateRows: 'max-content 1fr',
+        minHeight: 0,
+        minWidth: 0
+      }}
       tabBarStyle={{ margin: 0 }}
       type="editable-card"
       onEdit={onEdit}
