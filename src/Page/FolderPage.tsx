@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button, Row, Col } from 'antd';
 
 import { Files } from '../Components/Files/Files';
@@ -9,23 +9,36 @@ interface Props {
 }
 
 export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
-  const [state, setState] = useState([<Files fileHandlers={fileHandlers} />]);
+  const [state, setState] = useState([{ key: -1, content: <Files fileHandlers={fileHandlers} /> }]);
+  const key = useRef(0);
 
-  const newFolderPanel = () => setState(prev => prev.concat(<Files fileHandlers={fileHandlers} />));
+  const newFolderPanel = () =>
+    setState(prev =>
+      prev.concat({
+        key: key.current++,
+        content: <Files fileHandlers={fileHandlers} />
+      })
+    );
 
-  const removePanel = (panel: JSX.Element) => setState(prevState => prevState.filter(s => s !== panel));
+  const removePanel = (key: number) => setState(prevState => prevState.filter(s => s.key !== key));
 
   return (
     <Row>
       <Button type="primary" icon="plus" onClick={newFolderPanel} style={{ margin: '.75rem' }}>
         New Foldr Panel
       </Button>
-      {state.map((s, index) => (
-        <Col key={index}>
-          <div style={{ background: '#75ff8133', display: 'grid', justifyItems: 'end', padding: '.5rem 1rem' }}>
-            <Button onClick={() => removePanel(s)} icon="close" type="danger" shape="circle" />
+      {state.map(({ key, content }) => (
+        <Col key={key}>
+          <div
+            style={{
+              background: '#75ff8133',
+              display: 'grid',
+              justifyItems: 'end',
+              padding: '.5rem 1rem'
+            }}>
+            <Button onClick={() => removePanel(key)} icon="close" type="danger" shape="circle" />
           </div>
-          {s}
+          {content}
         </Col>
       ))}
     </Row>
