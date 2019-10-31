@@ -17,6 +17,8 @@ interface Props {
 export const Screen: React.FC<Props> = ({ book }) => {
   const [cover, setCover] = useState(<img alt="" />);
   const [tableOfContents, setTableOfContents] = useState(<TableOfContents tableOfContents={[]} />);
+  const [showTableOfContents, setShowTableOfContents] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState(['']);
 
   useEffect(() => {
     book.getImage(book.metadata.cover, (err, data, mimeType) => {
@@ -41,14 +43,23 @@ export const Screen: React.FC<Props> = ({ book }) => {
         minWidth: 0
       }}>
       <Header>
-        <Menu mode="horizontal">
-          <Menu.Item>
+        <Menu mode="horizontal" selectedKeys={selectedKeys}>
+          <Menu.Item
+            onClick={({ key }) => {
+              if (showTableOfContents) {
+                setSelectedKeys([]);
+                setShowTableOfContents(false);
+              } else {
+                setSelectedKeys([key]);
+                setShowTableOfContents(true);
+              }
+            }}>
             <Icon type="menu" />
           </Menu.Item>
         </Menu>
       </Header>
       <Layout style={{ overflow: 'hidden' }}>
-        <Sider style={{ overflow: 'auto' }}>{tableOfContents}</Sider>
+        {showTableOfContents && <Sider style={{ overflow: 'auto' }}>{tableOfContents}</Sider>}
         <Content style={{ overflow: 'auto' }}>{cover}</Content>
       </Layout>
     </Layout>

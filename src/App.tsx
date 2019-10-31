@@ -29,7 +29,7 @@ const App: React.FC = () => {
     setTabs([{ title: 'FolderPage', content: <FolderPage fileHandlers={[ePub(addTab)]} />, key: -1 }]);
   }, []);
 
-  const onEdit = (targetKey: string | React.MouseEvent<HTMLElement>, action: 'add' | 'remove'): void => {
+  const onEdit = (targetKey: string, action: 'add' | 'remove'): void => {
     if (action === 'add') {
       setTabs(tabs =>
         tabs.concat({
