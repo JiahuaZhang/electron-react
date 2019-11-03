@@ -35,6 +35,7 @@ export const Screen: React.FC<Props> = ({ book }) => {
 
   return (
     <Layout
+      className="screen"
       style={{
         maxHeight: '100%',
         display: 'grid',
@@ -60,7 +61,10 @@ export const Screen: React.FC<Props> = ({ book }) => {
       </Header>
       <Layout style={{ overflow: 'hidden' }}>
         {showTableOfContents && <Sider style={{ overflow: 'auto' }}>{tableOfContents}</Sider>}
-        <Content style={{ overflow: 'auto' }}>{cover}</Content>
+        <Content style={{ overflow: 'auto', display: 'grid', gridTemplateColumns: '7px 1fr' }}>
+          <div className="draggable"></div>
+          {cover}
+        </Content>
       </Layout>
     </Layout>
   );
