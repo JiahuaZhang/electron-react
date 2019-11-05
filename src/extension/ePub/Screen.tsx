@@ -19,6 +19,8 @@ export const Screen: React.FC<Props> = ({ book }) => {
   const [tableOfContents, setTableOfContents] = useState(<TableOfContents tableOfContents={[]} />);
   const [showTableOfContents, setShowTableOfContents] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(['']);
+  const [siderWidth, setSiderWidth] = useState(200);
+  const isResizing = useRef(false);
 
   useEffect(() => {
     book.getImage(book.metadata.cover, (err, data, mimeType) => {
@@ -32,6 +34,25 @@ export const Screen: React.FC<Props> = ({ book }) => {
 
     setTableOfContents(<TableOfContents tableOfContents={book.toc} />);
   }, [book]);
+
+  useEffect(() => {
+    const onMouseUp = () => (isResizing.current = false);
+    const resizeSider = event => {
+      if (isResizing.current) {
+        event.preventDefault();
+        if (event.clientX >= 100) {
+          setSiderWidth(event.clientX);
+        }
+      }
+    };
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mousemove', resizeSider);
+
+    return () => {
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('mousemove', resizeSider);
+    };
+  }, []);
 
   return (
     <Layout
@@ -60,9 +81,13 @@ export const Screen: React.FC<Props> = ({ book }) => {
         </Menu>
       </Header>
       <Layout style={{ overflow: 'hidden' }}>
-        {showTableOfContents && <Sider style={{ overflow: 'auto' }}>{tableOfContents}</Sider>}
+        {showTableOfContents && (
+          <Sider width={siderWidth} style={{ overflow: 'auto' }} theme="light">
+            {tableOfContents}
+          </Sider>
+        )}
         <Content style={{ overflow: 'auto', display: 'grid', gridTemplateColumns: '7px 1fr' }}>
-          <div className="draggable"></div>
+          <div className="draggable" onMouseDown={() => (isResizing.current = true)}></div>
           {cover}
         </Content>
       </Layout>
