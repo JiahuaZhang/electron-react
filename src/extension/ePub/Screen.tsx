@@ -6,18 +6,15 @@ import { throttleTime } from 'rxjs/operators';
 import './Screen.sass';
 import { EPub } from './book.type';
 import { TableOfContents } from './TableOfContents';
+import { Book } from './Book';
 
 const { Header, Content, Sider } = Layout;
-const img = (data: Buffer, mimeType: string, alt: string) => (
-  <img alt={alt} src={`data:${mimeType};base64, ${data.toString('base64')}`} />
-);
 
 interface Props {
   book: EPub;
 }
 
 export const Screen: React.FC<Props> = ({ book }) => {
-  const [cover, setCover] = useState(<img alt="" />);
   const [tableOfContents, setTableOfContents] = useState(<TableOfContents tableOfContents={[]} />);
   const [showTableOfContents, setShowTableOfContents] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(['']);
@@ -25,15 +22,6 @@ export const Screen: React.FC<Props> = ({ book }) => {
   const isResizing = useRef(false);
 
   useEffect(() => {
-    book.getImage(book.metadata.cover, (err, data, mimeType) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-
-      if (data) setCover(img(data, mimeType, 'cover'));
-    });
-
     setTableOfContents(<TableOfContents tableOfContents={book.toc} />);
   }, [book]);
 
@@ -98,7 +86,7 @@ export const Screen: React.FC<Props> = ({ book }) => {
         )}
         <Content style={{ overflow: 'auto', display: 'grid', gridTemplateColumns: '7px 1fr' }}>
           <div className="draggable" onMouseDown={() => (isResizing.current = true)}></div>
-          {cover}
+          <Book book={book} />
         </Content>
       </Layout>
     </Layout>
