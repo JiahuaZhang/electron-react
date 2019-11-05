@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Menu, Icon } from 'antd';
+import { fromEvent } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
 
 import './Screen.sass';
 import { EPub } from './book.type';
@@ -36,13 +38,20 @@ export const Screen: React.FC<Props> = ({ book }) => {
   }, [book]);
 
   useEffect(() => {
+    const subscription = fromEvent(document, 'mousemove')
+      .pipe(throttleTime(100))
+      .subscribe((event: any) => {
+        if (isResizing.current) {
+          if (event.clientX >= 100 && event.clientX < window.innerWidth) {
+            setSiderWidth(event.clientX);
+          }
+        }
+      });
+
     const onMouseUp = () => (isResizing.current = false);
     const resizeSider = event => {
       if (isResizing.current) {
         event.preventDefault();
-        if (event.clientX >= 100) {
-          setSiderWidth(event.clientX);
-        }
       }
     };
     window.addEventListener('mouseup', onMouseUp);
@@ -51,6 +60,7 @@ export const Screen: React.FC<Props> = ({ book }) => {
     return () => {
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('mousemove', resizeSider);
+      subscription.unsubscribe();
     };
   }, []);
 
