@@ -85,7 +85,9 @@ export const Screen: React.FC<Props> = ({ book }) => {
           </Sider>
         )}
         <Content style={{ overflow: 'auto', display: 'grid', gridTemplateColumns: '7px 1fr' }}>
-          <div className="draggable" onMouseDown={() => (isResizing.current = true)}></div>
+          {showTableOfContents && (
+            <div className="draggable" onMouseDown={() => (isResizing.current = true)}></div>
+          )}
           <Book book={book} />
         </Content>
       </Layout>
