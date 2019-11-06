@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 
-import { manifest, EPub } from './book.type';
+import { manifest } from './book.type';
+import { BookContext } from './BookContext';
 
 interface Props {
   section: manifest;
-  book: EPub;
 }
 
-export const Section: React.FC<Props> = ({ section, book }) => {
+export const Section: React.FC<Props> = ({ section }) => {
   const [html, setHtml] = useState(<></>);
+
+  const book = useContext(BookContext);
 
   useEffect(() => {
     try {

@@ -14,7 +14,7 @@ interface metadata {
   'primary-writing-mode'?: string;
 }
 
-interface manifest {
+export interface manifest {
   href: string;
   id: string;
   'media-type':
