@@ -17,7 +17,12 @@ interface metadata {
 interface manifest {
   href: string;
   id: string;
-  'media-type': string;
+  'media-type':
+    | 'text/html'
+    | 'text/xml'
+    | 'application/xml'
+    | 'application/xhtml+xml'
+    | 'image/svg+xml';
   level?: number;
   order?: number;
   title?: number;

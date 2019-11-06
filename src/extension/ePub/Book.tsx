@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { EPub } from './book.type';
+import { Section } from './Section';
 
 const img = (data: Buffer, mimeType: string, alt: string) => (
   <img alt={alt} src={`data:${mimeType};base64, ${data.toString('base64')}`} />
@@ -24,5 +25,10 @@ export const Book: React.FC<Props> = ({ book }) => {
     });
   }, [book]);
 
-  return <div>{cover}</div>;
+  return (
+    <div>
+      {cover}
+      <Section section={book.flow[0]} book={book} />
+    </div>
+  );
 };
