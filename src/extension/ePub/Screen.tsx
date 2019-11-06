@@ -79,15 +79,22 @@ export const Screen: React.FC<Props> = ({ book }) => {
         </Menu>
       </Header>
       <Layout style={{ overflow: 'hidden' }}>
-        {showTableOfContents && (
-          <Sider width={siderWidth} style={{ overflow: 'auto' }} theme="light">
-            {tableOfContents}
-          </Sider>
-        )}
-        <Content style={{ overflow: 'auto', display: 'grid', gridTemplateColumns: '7px 1fr' }}>
-          {showTableOfContents && (
-            <div className="draggable" onMouseDown={() => (isResizing.current = true)}></div>
-          )}
+        <Sider
+          width={showTableOfContents ? siderWidth : 0}
+          style={{ overflow: 'auto' }}
+          theme="light">
+          {tableOfContents}
+        </Sider>
+        <Content
+          style={{
+            overflow: 'auto',
+            display: 'grid',
+            gridTemplateColumns: 'max-content 1fr'
+          }}>
+          <div
+            style={{ width: showTableOfContents ? '7px' : 0 }}
+            className="draggable"
+            onMouseDown={() => (isResizing.current = true)}></div>
           <Book book={book} />
         </Content>
       </Layout>
