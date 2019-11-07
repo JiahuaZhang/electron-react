@@ -26,7 +26,7 @@ export const Book: React.FC<Props> = () => {
 
     init_sections[currentIndex].section = <Section section={init_sections[currentIndex].flow} />;
     setSections(init_sections);
-  }, [book]);
+  }, [book, currentIndex]);
 
   useEffect(() => {
     if (!sections[currentIndex].section) {
@@ -36,7 +36,7 @@ export const Book: React.FC<Props> = () => {
         return new_state;
       });
     }
-  }, [currentIndex]);
+  }, [currentIndex, sections]);
 
   return (
     <div
