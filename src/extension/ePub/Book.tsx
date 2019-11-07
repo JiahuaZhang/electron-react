@@ -26,7 +26,7 @@ export const Book: React.FC<Props> = () => {
 
     init_sections[currentIndex].section = <Section section={init_sections[currentIndex].flow} />;
     setSections(init_sections);
-  }, []);
+  }, [book]);
 
   useEffect(() => {
     if (!sections[currentIndex].section) {

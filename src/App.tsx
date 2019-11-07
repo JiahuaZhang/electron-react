@@ -10,7 +10,7 @@ import { renderer } from './model/renderer';
 const { TabPane } = Tabs;
 
 const App: React.FC = () => {
-  const [tabs, setTabs] = useState([] as { title: string; content: JSX.Element; key: number }[]);
+  const [tabs, setTabs] = useState<{ title: string; content: JSX.Element; key: number }[]>([]);
   const id = useRef(0);
   const [activeKey, setActiveKey] = useState('0');
 

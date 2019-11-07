@@ -79,13 +79,11 @@ export const Screen: React.FC<Props> = ({ book }) => {
               className="draggable"
               onMouseDown={() => {
                 changingSiderWidth.current = fromEvent<MouseEvent>(document, 'mousemove')
-                  .pipe(
-                    tap((event: MouseEvent) => {
-                      event.preventDefault();
-                    }),
-                    throttleTime(100)
+                  .pipe<MouseEvent, MouseEvent>(
+                    tap(event => event.preventDefault()),
+                    throttleTime<MouseEvent>(100)
                   )
-                  .subscribe((event: MouseEvent) => {
+                  .subscribe(event => {
                     if (event.clientX >= 100 && event.clientX < window.innerWidth) {
                       setSiderWidth(event.clientX);
                     }
