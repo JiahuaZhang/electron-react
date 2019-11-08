@@ -9,10 +9,17 @@ interface Props {
 
 const getImageString = (book: EPub, fileName: string): Promise<string> =>
   new Promise<string>((res, rej) => {
-    fileName = fileName.split('.')[0];
-    book.getImage(fileName, (err, data, mimeType) => {
+    const manifest = Object.values(book.manifest).find(manifest =>
+      manifest.href.includes(fileName)
+    );
+    if (!manifest) {
+      rej(`failed to find relevant manifest for ${fileName}`);
+      console.error(`failed to find relevant manifest for ${fileName}`);
+      return;
+    }
+
+    book.getImage(manifest.id, (err, data, mimeType) => {
       if (err) {
-        alert(`failed to getImage for ${fileName}`);
         console.error(err);
         rej(err);
       }
@@ -55,7 +62,7 @@ export const Section: React.FC<Props> = ({ section }) => {
       }
 
       if (text.includes('<image')) {
-        const matches = text.match(/<image.*\/>/g) || [];
+        const matches = text.match(/<image.*>/g) || [];
 
         for (const match of matches) {
           const attributes = match.match(/xlink:href="(.*)"/);
