@@ -30,7 +30,8 @@ const getImageString = (book: EPub, fileName: string): Promise<string> =>
 
 const getImgString = (book: EPub, fileName: string): Promise<string> =>
   new Promise<string>((res, rej) => {
-    const manifest = Object.values(book.manifest).find(value => value.href === fileName);
+    fileName = fileName.split('/').pop() || fileName;
+    const manifest = Object.values(book.manifest).find(value => value.href.includes(fileName));
     if (!manifest) {
       alert(`fail to find img for ${fileName}`);
       rej(`fail to find img for ${fileName}`);
@@ -62,7 +63,7 @@ export const Section: React.FC<Props> = ({ section }) => {
       }
 
       if (text.includes('<image')) {
-        const matches = text.match(/<image.*>/g) || [];
+        const matches = text.match(/<image.*?>/g) || [];
 
         for (const match of matches) {
           const attributes = match.match(/xlink:href="(.*)"/);
@@ -73,9 +74,9 @@ export const Section: React.FC<Props> = ({ section }) => {
       }
 
       if (text.includes('<img')) {
-        const matches = text.match(/<img.*>/g) || [];
+        const matches = text.match(/<img.*?>/g) || [];
         for (const match of matches) {
-          const attributes = match.match(/src=".*(images\/.*?)"/);
+          const attributes = match.match(/src="(.*?)"/);
           if (!attributes) return;
           const imgString = await getImgString(book, attributes[1]);
           text = text.replace(attributes[0], `src="${imgString}"`);
