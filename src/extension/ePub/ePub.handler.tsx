@@ -19,7 +19,12 @@ export const ePub = (displayer: renderer): fileHandler => {
       .slice(-1)[0]
       .split(/.epub/i)[0];
 
-    book.on('end', () => displayer(book_name, <Screen book={book} />));
+    book.on('end', () => {
+      for (const key in book.manifest) {
+        book.manifest[key].href = decodeURIComponent(book.manifest[key].href);
+      }
+      displayer(book_name, <Screen book={book} />);
+    });
   };
 
   return {

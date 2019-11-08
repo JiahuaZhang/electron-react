@@ -8,7 +8,7 @@ interface Props {
 }
 
 const getImageString = (book: EPub, fileName: string): Promise<string> =>
-  new Promise((res, rej) => {
+  new Promise<string>((res, rej) => {
     fileName = fileName.split('.')[0];
     book.getImage(fileName, (err, data, mimeType) => {
       if (err) {
@@ -21,8 +21,8 @@ const getImageString = (book: EPub, fileName: string): Promise<string> =>
     });
   });
 
-const getImgString = (book: EPub, fileName: string) =>
-  new Promise((res, rej) => {
+const getImgString = (book: EPub, fileName: string): Promise<string> =>
+  new Promise<string>((res, rej) => {
     const manifest = Object.values(book.manifest).find(value => value.href === fileName);
     if (!manifest) {
       alert(`fail to find img for ${fileName}`);
@@ -47,43 +47,36 @@ export const Section: React.FC<Props> = ({ section }) => {
   const book = useContext(BookContext);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        book.getChapterRaw(section.id, async (err, text) => {
-          if (err) {
-            console.error(err);
-            alert(err.message);
-            return;
-          }
-
-          if (text.includes('<image')) {
-            const matches = text.match(/<image.*\/>/g) || [];
-
-            for (const match of matches) {
-              const attributes = match.match(/xlink:href="(.*)"/);
-              if (!attributes) return;
-              const imageString = await getImageString(book, attributes[1]);
-              text = text.replace(attributes[0], `xlink:href="${imageString}"`);
-            }
-          } else if (text.includes('<img')) {
-            const matches = text.match(/<img.*\/>/g) || [];
-            for (const match of matches) {
-              const attributes = match.match(/src=".*(images\/.*?)"/);
-              if (!attributes) return;
-              const imgString = await getImgString(book, attributes[1]);
-              text = text.replace(attributes[0], `src="${imgString}"`);
-            }
-          }
-
-          setHtml(<div dangerouslySetInnerHTML={{ __html: text }}></div>);
-        });
-      } catch (error) {
-        console.error(section);
-        console.error(error);
+    book.getChapterRaw(section.id, async (err, text) => {
+      if (err) {
+        console.error(err);
+        alert(err.message);
+        return;
       }
-    };
 
-    load();
+      if (text.includes('<image')) {
+        const matches = text.match(/<image.*\/>/g) || [];
+
+        for (const match of matches) {
+          const attributes = match.match(/xlink:href="(.*)"/);
+          if (!attributes) return;
+          const imageString = await getImageString(book, attributes[1]);
+          text = text.replace(attributes[0], `xlink:href="${imageString}"`);
+        }
+      }
+
+      if (text.includes('<img')) {
+        const matches = text.match(/<img.*>/g) || [];
+        for (const match of matches) {
+          const attributes = match.match(/src=".*(images\/.*?)"/);
+          if (!attributes) return;
+          const imgString = await getImgString(book, attributes[1]);
+          text = text.replace(attributes[0], `src="${imgString}"`);
+        }
+      }
+
+      setHtml(<div dangerouslySetInnerHTML={{ __html: text }}></div>);
+    });
   }, [section, book]);
 
   return html;
