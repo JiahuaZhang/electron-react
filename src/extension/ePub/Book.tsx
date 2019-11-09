@@ -1,12 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import { Section } from './Section';
 import { BookContext } from './BookContext';
-import { manifest } from './book.type';
+import { manifest, EPub } from './book.type';
 
-export const img = (data: Buffer, mimeType: string, alt: string) => (
-  <img alt={alt} src={`data:${mimeType};base64, ${data.toString('base64')}`} />
-);
+const getCss = (book: EPub, id: string): Promise<string> =>
+  new Promise<string>((res, rej) => {
+    book.getFile(id, (err, text, mimeType) => {
+      if (err) {
+        alert(`failed to get css for ${id}`);
+        console.error(err);
+        rej(err);
+      }
+
+      res(text.toString());
+    });
+  });
 
 interface Props {}
 
@@ -17,6 +26,18 @@ export const Book: React.FC<Props> = () => {
   }[]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const book = React.useContext(BookContext);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const css = Object.values(book.manifest).filter(({ href }) => href.endsWith('.css'));
+
+    Promise.all(css.map(c => getCss(book, c.id)))
+      .then(arr => arr.join('\n'))
+      .then(styles => {
+        if (!ref.current) return;
+        ref.current.setAttribute('style', styles);
+      });
+  }, [book]);
 
   useEffect(() => {
     const init_sections = book.flow.map(flow => ({
@@ -40,6 +61,7 @@ export const Book: React.FC<Props> = () => {
 
   return (
     <div
+      ref={ref}
       tabIndex={0}
       onKeyDown={event => {
         if (event.key === 'ArrowRight') {
