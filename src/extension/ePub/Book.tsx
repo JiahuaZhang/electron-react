@@ -22,7 +22,7 @@ export const Book: React.FC<Props> = () => {
     );
 
     ipcRenderer.send("add reference", book.metadata.title);
-    assets.map(asset => {
+    assets.map(asset =>
       book.getFile(asset.id, (error: Error, data: Buffer, mimeType: string) => {
         if (error) {
           console.error(`failed to load ${asset.title}`);
@@ -31,8 +31,8 @@ export const Book: React.FC<Props> = () => {
         }
 
         ipcRenderer.send("store asset", book.metadata.title, asset.href, data);
-      });
-    });
+      })
+    );
 
     return () => ipcRenderer.send("remove reference", book.metadata.title);
   }, [book]);
