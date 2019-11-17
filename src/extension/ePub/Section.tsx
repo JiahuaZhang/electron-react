@@ -30,25 +30,24 @@ export const Section: React.FC<Props> = ({ section }) => {
         return;
       }
 
-      if (text.includes('<image')) {
-        const matches = text.match(/<image.*?>/g) || [];
-
-        for (const match of matches) {
-          const attributes = match.match(/xlink:href="(.*)"/);
-          if (!attributes) return;
-          const href = await redirectedHref(book, attributes[1]);
-          text = text.replace(attributes[0], `xlink:href="${href}"`);
+      let matches = text.match(/xlink:href="(.*)"/g) || [];
+      for (const match of matches) {
+        const attributes = match.match(/xlink:href="(.*)"/);
+        if (!attributes) {
+          return;
         }
+        const href = await redirectedHref(book, attributes[1]);
+        text = text.replace(attributes[0], `xlink:href="${href}"`);
       }
 
-      if (text.includes('<img')) {
-        const matches = text.match(/<img.*?>/g) || [];
-        for (const match of matches) {
-          const attributes = match.match(/src="(.*?)"/);
-          if (!attributes) return;
-          const href = await redirectedHref(book, attributes[1]);
-          text = text.replace(attributes[0], `src="${href}"`);
+      matches = text.match(/src="(.*?)"/g) || [];
+      for (const match of matches) {
+        const attributes = match.match(/src="(.*?)"/);
+        if (!attributes) {
+          return;
         }
+        const href = await redirectedHref(book, attributes[1]);
+        text = text.replace(attributes[0], `src="${href}"`);
       }
 
       setHtml(<div dangerouslySetInnerHTML={{ __html: text }}></div>);
