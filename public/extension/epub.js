@@ -3,11 +3,10 @@ const fs = require('fs');
 const rmdir = require('rmdir');
 
 let references = {};
-const bookDefaultData = { count: 0, files: [], events: {} };
 
 ipcMain.on('add reference', (event, bookname) => {
   if (!(bookname in references)) {
-    references[bookname] = { ...bookDefaultData, count: 1 };
+    references[bookname] = { count: 1, files: [], events: {} };
     return;
   }
 
@@ -22,9 +21,9 @@ ipcMain.on('store asset', async (event, bookname, filename, buffer) => {
   await fs.promises.writeFile(`./public/assets/${bookname}/${filename}`, buffer);
 
   references[bookname].files.push(filename);
-  if (references[bookname].events[filename]) {
+  if (references[bookname].events[filename] && references[bookname].events[filename].length) {
     references[bookname].events[filename].forEach(event =>
-      event.reply(`${bookname}/${filename} loaded`)
+      event.reply(`${bookname}/${filename} loaded`, 'async')
     );
     references[bookname].events[filename] = [];
   }
@@ -43,12 +42,12 @@ ipcMain.on('remove reference', (event, bookname) => {
     }
   });
 
-  references[bookname] = { ...bookDefaultData };
+  references[bookname] = { count: 0, files: [], events: {} };
 });
 
 ipcMain.on('resource loaded?', (event, bookname, filename) => {
   if (references[bookname] && references[bookname].files.includes(filename)) {
-    event.reply(`${bookname}/${filename} loaded`);
+    event.reply(`${bookname}/${filename} loaded`, 'sync');
   } else {
     if (references[bookname].events[filename]) {
       references[bookname].events[filename].push(event);
