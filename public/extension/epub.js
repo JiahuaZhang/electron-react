@@ -1,28 +1,38 @@
-const { ipcMain } = require("electron");
-const fs = require("fs");
-const rmdir = require("rmdir");
+const { ipcMain } = require('electron');
+const fs = require('fs');
+const rmdir = require('rmdir');
 
 let references = {};
+const bookDefaultData = { count: 0, files: [], events: {} };
 
-// todo:
-// there are bug currently, react render component faster than writing files to local
-// fix it next push
-
-ipcMain.on("add reference", (event, bookname) => {
-  references[bookname] = references[bookname] ? references[bookname] + 1 : 1;
-});
-
-ipcMain.on("store asset", (event, bookname, href, buffer) => {
-  const filename = href.split("/").pop();
-  if (!fs.existsSync(`./public/assets/${bookname}`)) {
-    fs.mkdirSync(`./public/assets/${bookname}`);
+ipcMain.on('add reference', (event, bookname) => {
+  if (!(bookname in references)) {
+    references[bookname] = { ...bookDefaultData, count: 1 };
+    return;
   }
-  fs.promises.writeFile(`./public/assets/${bookname}/${filename}`, buffer);
+
+  references[bookname].count++;
 });
 
-ipcMain.on("remove reference", (event, bookname) => {
-  references[bookname]--;
-  if (references[bookname]) {
+ipcMain.on('store asset', async (event, bookname, filename, buffer) => {
+  if (!fs.existsSync(`./public/assets/${bookname}`)) {
+    fs.mkdirSync(`./public/assets/${bookname}`, { recursive: true });
+  }
+
+  await fs.promises.writeFile(`./public/assets/${bookname}/${filename}`, buffer);
+
+  references[bookname].files.push(filename);
+  if (references[bookname].events[filename]) {
+    references[bookname].events[filename].forEach(event =>
+      event.reply(`${bookname}/${filename} loaded`)
+    );
+    references[bookname].events[filename] = [];
+  }
+});
+
+ipcMain.on('remove reference', (event, bookname) => {
+  references[bookname].count--;
+  if (references[bookname].count) {
     return;
   }
 
@@ -32,4 +42,18 @@ ipcMain.on("remove reference", (event, bookname) => {
       console.error(err);
     }
   });
+
+  references[bookname] = { ...bookDefaultData };
+});
+
+ipcMain.on('resource loaded?', (event, bookname, filename) => {
+  if (references[bookname] && references[bookname].files.includes(filename)) {
+    event.reply(`${bookname}/${filename} loaded`);
+  } else {
+    if (references[bookname].events[filename]) {
+      references[bookname].events[filename].push(event);
+    } else {
+      references[bookname].events[filename] = [event];
+    }
+  }
 });

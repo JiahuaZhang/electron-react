@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from 'react';
 
-import { manifest, EPub } from "./book.type";
-import { BookContext } from "./BookContext";
+import { manifest, EPub } from './book.type';
+import { BookContext } from './BookContext';
+
+const { ipcRenderer } = window.require('electron');
 
 interface Props {
   section: manifest;
@@ -9,8 +11,11 @@ interface Props {
 
 const redirectedHref = (book: EPub, href: string): Promise<string> =>
   new Promise<string>(res => {
-    const fileName = href.split("/").pop() || "";
-    res(`assets/${book.metadata.title}/${fileName}`);
+    const fileName = href.split('/').pop() || '';
+    ipcRenderer.send('resource loaded?', book.metadata.title, fileName);
+    ipcRenderer.once(`${book.metadata.title}/${fileName} loaded`, () =>
+      res(`assets/${book.metadata.title}/${fileName}`)
+    );
   });
 
 export const Section: React.FC<Props> = ({ section }) => {
@@ -25,7 +30,7 @@ export const Section: React.FC<Props> = ({ section }) => {
         return;
       }
 
-      if (text.includes("<image")) {
+      if (text.includes('<image')) {
         const matches = text.match(/<image.*?>/g) || [];
 
         for (const match of matches) {
@@ -36,7 +41,7 @@ export const Section: React.FC<Props> = ({ section }) => {
         }
       }
 
-      if (text.includes("<img")) {
+      if (text.includes('<img')) {
         const matches = text.match(/<img.*?>/g) || [];
         for (const match of matches) {
           const attributes = match.match(/src="(.*?)"/);
