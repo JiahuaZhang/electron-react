@@ -24,9 +24,6 @@ export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
 
   return (
     <Row>
-      <Button type="primary" icon="plus" onClick={newFolderPanel} style={{ margin: '.75rem' }}>
-        New Foldr Panel
-      </Button>
       {state.map(({ key, content }) => (
         <Col key={key}>
           <div
@@ -41,6 +38,9 @@ export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
           {content}
         </Col>
       ))}
+      <Button type="primary" icon="plus" onClick={newFolderPanel} style={{ margin: '.75rem' }}>
+        New Foldr Panel
+      </Button>
     </Row>
   );
 };
