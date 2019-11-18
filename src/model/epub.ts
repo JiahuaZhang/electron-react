@@ -1,3 +1,8 @@
+export interface fileHandler {
+  matcher: (filename: string) => boolean;
+  processor: (path: string) => void;
+}
+
 export interface fileIconProps {
   color?: string;
   extension?: string;
@@ -17,3 +22,5 @@ export interface fileIconProps {
   parentPath: string;
   filename: string;
 }
+
+export type renderer = (title: string, content: JSX.Element) => void;

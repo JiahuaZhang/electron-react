@@ -1,8 +1,7 @@
 import React from 'react';
 import path from 'path';
 
-import { fileHandler } from '../../model/fileHandler';
-import { renderer } from '../../model/renderer';
+import { fileHandler, renderer } from '../../model/epub';
 import { EPub } from './book.type';
 import { Screen } from './Screen';
 

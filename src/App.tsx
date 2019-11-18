@@ -5,7 +5,7 @@ import 'antd/dist/antd.css';
 import './App.sass';
 import { FolderPage } from './Page/FolderPage';
 import { ePub } from './extension/ePub/ePub.handler';
-import { renderer } from './model/renderer';
+import { renderer } from './model/epub';
 
 const { Sider } = Layout;
 

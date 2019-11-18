@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Button, Row, Col } from 'antd';
 
 import { Files } from '../Components/Files/Files';
-import { fileHandler } from '../model/fileHandler';
+import { fileHandler } from '../model/epub';
 
 interface Props {
   fileHandlers?: fileHandler[];
