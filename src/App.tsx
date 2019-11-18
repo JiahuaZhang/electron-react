@@ -29,7 +29,9 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setTabs([{ title: 'FolderPage', content: <FolderPage fileHandlers={[ePub(addTab)]} />, key: -1 }]);
+    setState([
+      { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(addContent)]} /> }
+    ]);
   }, []);
 
   const renderedContent = () => {
@@ -57,7 +59,7 @@ const App: React.FC = () => {
           type="fullscreen"
         />
         <Sider theme="light" collapsible defaultCollapsed>
-          <Menu defaultSelectedKeys={[activeKey.toString()]}>
+          <Menu selectedKeys={[activeKey.toString()]}>
             {state.map(({ key, type, title }) => (
               <Menu.Item key={key} onClick={() => setActiveKey(key)}>
                 <Icon type={type} />
