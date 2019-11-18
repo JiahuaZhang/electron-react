@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Tabs, Row, Col, Typography, message } from 'antd';
+import { Tabs, Row, Col, Typography, message, Icon } from 'antd';
 import FileIcon from 'react-file-icon';
 import path from 'path';
 
@@ -24,7 +24,10 @@ const getNav = (directory: string): string[] => {
   return directory ? [path.sep, ...directory.split(path.sep)] : [path.sep];
 };
 
-const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: () => boolean }): fileIconProps => {
+const getFileInfo = (
+  parentPath: string,
+  dirEnt: { name: string; isDirectory: () => boolean }
+): fileIconProps => {
   let result = {} as fileIconProps;
 
   result.key = dirEnt.name;
@@ -47,6 +50,8 @@ const getFileInfo = (parentPath: string, dirEnt: { name: string; isDirectory: ()
 export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
   const [state, setState] = useState([] as any[]);
   const [activeKey, setActiveKey] = useState('');
+  const [toggle, setToggle] = useState(true);
+  const [toggleIcon, setToggleIcon] = useState(<Icon type="up" style={{ color: '#000000b3' }} />);
 
   const adjustDirectory = useCallback((directory: string) => {
     const init_state = getNav(directory).map((tab: string) => ({ tab, files: [] }));
@@ -58,6 +63,13 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
   }, []);
 
   useEffect(() => adjustDirectory(directory), [directory, adjustDirectory]);
+  useEffect(() => {
+    if (toggle) {
+      setToggleIcon(<Icon type="up" style={{ color: '#000000b3' }} />);
+    } else {
+      setToggleIcon(<></>);
+    }
+  }, [toggle, setToggleIcon]);
 
   const updateTabFiles = async (index: number, directory: string) => {
     const file_names = await fs.promises
@@ -76,6 +88,13 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
   };
 
   const navigate = (activeKey: string) => {
+    if (activeKey === 'toggle') {
+      setToggle(false);
+      return setActiveKey('toggle');
+    } else {
+      setToggle(true);
+    }
+
     const index = Number(activeKey.split('-')[1]);
     const array = state.slice(0, index + 1).map(({ tab }) => tab);
     let dir: string;
@@ -127,11 +146,12 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
     <Tabs onChange={navigate} activeKey={activeKey}>
       {state.map(({ tab, files }, index) => (
         <TabPane key={`${tab}-${index}`} tab={tab}>
-          <Row key={index} type="flex" justify="space-between" gutter={[{ xs: 8, sm: 16, md: 24, lg: 32 }, 20]}>
+          <Row key={index} type="flex" gutter={[{ xs: 8, sm: 16, md: 24, lg: 32 }, 20]}>
             {files.map((f: fileIconProps, index: number) => renderFileIcon(f, index))}
           </Row>
         </TabPane>
       ))}
+      <TabPane key="toggle" tab={toggleIcon}></TabPane>
     </Tabs>
   );
 };
