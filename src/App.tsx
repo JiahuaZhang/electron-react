@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Tabs, Layout, Icon, Menu } from 'antd';
+import { Layout, Icon, Menu } from 'antd';
 import 'antd/dist/antd.css';
 
 import './App.sass';
@@ -7,21 +7,23 @@ import { FolderPage } from './Page/FolderPage';
 import { ePub } from './extension/ePub/ePub.handler';
 import { renderer } from './model/renderer';
 
-const { TabPane } = Tabs;
 const { Sider } = Layout;
 
 const App: React.FC = () => {
-  const [tabs, setTabs] = useState<{ title: string; content: JSX.Element; key: number }[]>([]);
+  const [state, setState] = useState<
+    { type?: string; title?: string; key: number; content: JSX.Element }[]
+  >([]);
   const id = useRef(0);
-  const [activeKey, setActiveKey] = useState('0');
+  const [activeKey, setActiveKey] = useState(-1);
 
-  const addTab: renderer = async (title: string, content: JSX.Element) => {
-    setTabs(prev_state => {
-      setActiveKey(id.current.toString());
+  const addContent: renderer = async (title: string, content: JSX.Element) => {
+    setState(prev_state => {
+      setActiveKey(id.current);
       return prev_state.concat({
         title,
         content,
-        key: id.current++
+        key: id.current++,
+        type: 'book'
       });
     });
   };
@@ -30,27 +32,9 @@ const App: React.FC = () => {
     setTabs([{ title: 'FolderPage', content: <FolderPage fileHandlers={[ePub(addTab)]} />, key: -1 }]);
   }, []);
 
-  const onEdit = (
-    targetKey: string | React.MouseEvent<HTMLElement>,
-    action: 'add' | 'remove'
-  ): void => {
-    if (action === 'add') {
-      setTabs(tabs =>
-        tabs.concat({
-          title: 'FolderPage',
-          content: <FolderPage fileHandlers={[ePub(addTab)]} />,
-          key: id.current++
-        })
-      );
-    } else if (action === 'remove') {
-      setTabs(tabs => tabs.filter(({ key }) => key.toString() !== targetKey));
-      if (activeKey === targetKey) {
-        const first_available_tab = tabs.find(({ key }) => key.toString() !== targetKey);
-        if (first_available_tab) {
-          setActiveKey(first_available_tab.key.toString());
-        }
-      }
-    }
+  const renderedContent = () => {
+    const current = state.find(({ key }) => key === activeKey);
+    return current ? current.content : null;
   };
 
   return (
@@ -72,17 +56,18 @@ const App: React.FC = () => {
           style={{ fontSize: '1.5rem', background: 'white', padding: '.5rem', textAlign: 'left' }}
           type="fullscreen"
         />
-        <Sider theme="light" collapsible>
-          <Menu defaultSelectedKeys={['home']}>
-            <Menu.Item key="home">
-              <Icon type="home" />
-            </Menu.Item>
+        <Sider theme="light" collapsible defaultCollapsed>
+          <Menu defaultSelectedKeys={[activeKey.toString()]}>
+            {state.map(({ key, type, title }) => (
+              <Menu.Item key={key} onClick={() => setActiveKey(key)}>
+                <Icon type={type} />
+                {title}
+              </Menu.Item>
+            ))}
           </Menu>
         </Sider>
       </Layout>
-      <Layout style={{ overflow: 'auto', background: 'white' }}>
-        <FolderPage />
-      </Layout>
+      <Layout style={{ overflow: 'auto', background: 'white' }}>{renderedContent()}</Layout>
     </Layout>
   );
 };
