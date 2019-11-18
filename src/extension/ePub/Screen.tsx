@@ -13,9 +13,10 @@ const { Header, Content, Sider } = Layout;
 
 interface Props {
   book: EPub;
+  discard?: () => void;
 }
 
-export const Screen: React.FC<Props> = ({ book }) => {
+export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [tableOfContents, setTableOfContents] = useState(<TableOfContents tableOfContents={[]} />);
   const [showTableOfContents, setShowTableOfContents] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(['']);
@@ -59,6 +60,11 @@ export const Screen: React.FC<Props> = ({ book }) => {
               }}>
               <Icon type="menu" />
             </Menu.Item>
+            {discard && (
+              <Menu.Item>
+                <Icon type="close" onClick={discard} />
+              </Menu.Item>
+            )}
           </Menu>
         </Header>
         <Layout style={{ overflow: 'hidden' }}>
