@@ -9,7 +9,12 @@ interface Props {
 }
 
 export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
-  const [state, setState] = useState([{ key: -1, content: <Files fileHandlers={fileHandlers} /> }]);
+  const [state, setState] = useState([
+    {
+      key: -1,
+      content: <Files directory="/Users/jzhang016/Documents/Books" fileHandlers={fileHandlers} />
+    }
+  ]);
   const key = useRef(0);
 
   const newFolderPanel = () =>

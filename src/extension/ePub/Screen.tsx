@@ -35,6 +35,8 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
 
+  useEffect(() => console.log('Screen render'));
+
   return (
     <BookContext.Provider value={book}>
       <Layout

@@ -7,7 +7,7 @@ import { Screen } from './Screen';
 
 const epub = window.require('epub');
 
-export const ePub = (controller: () => controller): fileHandler => {
+export const ePub = (control: () => controller): fileHandler => {
   const matcher = (filename: string): boolean => filename.endsWith('.epub');
 
   const processor = (direcotry: string) => {
@@ -23,7 +23,7 @@ export const ePub = (controller: () => controller): fileHandler => {
         book.manifest[key].href = decodeURIComponent(book.manifest[key].href);
       }
 
-      const { render, discard } = controller();
+      const { render, discard } = control();
       render(<Screen book={book} discard={discard} />, book_name);
     });
   };
