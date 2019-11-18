@@ -1,13 +1,13 @@
 import React from 'react';
 import path from 'path';
 
-import { fileHandler, renderer } from '../../model/epub';
+import { fileHandler, controller } from '../../model/epub';
 import { EPub } from './book.type';
 import { Screen } from './Screen';
 
 const epub = window.require('epub');
 
-export const ePub = (displayer: renderer): fileHandler => {
+export const ePub = (controller: () => controller): fileHandler => {
   const matcher = (filename: string): boolean => filename.endsWith('.epub');
 
   const processor = (direcotry: string) => {
@@ -22,7 +22,9 @@ export const ePub = (displayer: renderer): fileHandler => {
       for (const key in book.manifest) {
         book.manifest[key].href = decodeURIComponent(book.manifest[key].href);
       }
-      displayer(book_name, <Screen book={book} />);
+
+      const { render, discard } = controller();
+      render(<Screen book={book} discard={discard} />, book_name);
     });
   };
 

@@ -32,21 +32,21 @@ export const Section: React.FC<Props> = ({ section }) => {
 
       let matches = text.match(/xlink:href="(.*)"/g) || [];
       for (const match of matches) {
-        const attributes = match.match(/xlink:href="(.*)"/);
-        if (!attributes) {
+        const attributes = match.match(/xlink:href="(?<href>.*)"/);
+        if (!attributes || !attributes.groups) {
           return;
         }
-        const href = await redirectedHref(book, attributes[1]);
+        const href = await redirectedHref(book, attributes.groups.href);
         text = text.replace(attributes[0], `xlink:href="${href}"`);
       }
 
       matches = text.match(/src="(.*?)"/g) || [];
       for (const match of matches) {
-        const attributes = match.match(/src="(.*?)"/);
-        if (!attributes) {
+        const attributes = match.match(/src="(?<src>.*?)"/);
+        if (!attributes || !attributes.groups) {
           return;
         }
-        const href = await redirectedHref(book, attributes[1]);
+        const href = await redirectedHref(book, attributes.groups.src);
         text = text.replace(attributes[0], `src="${href}"`);
       }
 

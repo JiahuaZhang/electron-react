@@ -5,7 +5,7 @@ import 'antd/dist/antd.css';
 import './App.sass';
 import { FolderPage } from './Page/FolderPage';
 import { ePub } from './extension/ePub/ePub.handler';
-import { renderer } from './model/epub';
+import { controller } from './model/epub';
 
 const { Sider } = Layout;
 
@@ -16,21 +16,33 @@ const App: React.FC = () => {
   const id = useRef(0);
   const [activeKey, setActiveKey] = useState(-1);
 
-  const addContent: renderer = async (title: string, content: JSX.Element) => {
-    setState(prev_state => {
-      setActiveKey(id.current);
-      return prev_state.concat({
-        title,
-        content,
-        key: id.current++,
-        type: 'book'
-      });
-    });
+  const getController = (): controller => {
+    const currentId = id.current;
+    return {
+      render: (content: JSX.Element, title?: string) => {
+        setState(prev_state => {
+          setActiveKey(currentId);
+          id.current++;
+          return prev_state.concat({
+            title,
+            content,
+            key: currentId,
+            type: 'book'
+          });
+        });
+      },
+      discard: () => {
+        setActiveKey(-1);
+        setState(prevState => {
+          return prevState.filter(({ key }) => key !== currentId);
+        });
+      }
+    };
   };
 
   useEffect(() => {
     setState([
-      { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(addContent)]} /> }
+      { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(getController)]} /> }
     ]);
   }, []);
 
@@ -47,28 +59,16 @@ const App: React.FC = () => {
         display: 'grid',
         gridTemplateColumns: 'max-content 1fr'
       }}>
-      <Layout
-        style={{
-          display: 'grid',
-          gridTemplateRows: 'max-content 1fr',
-          overflow: 'auto',
-          height: '100%'
-        }}>
-        <Icon
-          style={{ fontSize: '1.5rem', background: 'white', padding: '.5rem', textAlign: 'left' }}
-          type="fullscreen"
-        />
-        <Sider theme="light" collapsible defaultCollapsed>
-          <Menu selectedKeys={[activeKey.toString()]}>
-            {state.map(({ key, type, title }) => (
-              <Menu.Item key={key} onClick={() => setActiveKey(key)}>
-                <Icon type={type} />
-                {title}
-              </Menu.Item>
-            ))}
-          </Menu>
-        </Sider>
-      </Layout>
+      <Sider theme="light" collapsible defaultCollapsed>
+        <Menu selectedKeys={[activeKey.toString()]}>
+          {state.map(({ key, type, title }) => (
+            <Menu.Item key={key} onClick={() => setActiveKey(key)}>
+              <Icon type={type} />
+              {title}
+            </Menu.Item>
+          ))}
+        </Menu>
+      </Sider>
       <Layout style={{ overflow: 'auto', background: 'white' }}>{renderedContent()}</Layout>
     </Layout>
   );
