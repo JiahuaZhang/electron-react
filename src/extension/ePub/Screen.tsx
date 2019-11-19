@@ -48,7 +48,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
           minWidth: 0
         }}>
         <Header>
-          <Menu mode="horizontal" selectedKeys={selectedKeys}>
+          <Menu mode="horizontal" selectedKeys={selectedKeys} style={{ display: 'flex' }}>
             <Menu.Item
               onClick={({ key }) => {
                 if (showTableOfContents) {
@@ -62,8 +62,17 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
               <Icon type="menu" />
             </Menu.Item>
             {discard && (
-              <Menu.Item>
-                <Icon type="close" onClick={discard} />
+              <Menu.Item style={{ marginLeft: 'auto' }}>
+                <Icon
+                  onClick={discard}
+                  type="close-circle"
+                  theme="filled"
+                  style={{
+                    fontSize: '2rem',
+                    verticalAlign: 'middle',
+                    color: 'red'
+                  }}
+                />
               </Menu.Item>
             )}
           </Menu>
