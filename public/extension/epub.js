@@ -37,7 +37,7 @@ ipcMain.on('remove reference', (event, bookname) => {
 
   rmdir(`./public/assets/${bookname}`, err => {
     if (err) {
-      console.error(`failed to delete /public/assets/${bookname}`);
+      console.error(`failed to delete ./public/assets/${bookname}`);
       console.error(err);
     }
   });

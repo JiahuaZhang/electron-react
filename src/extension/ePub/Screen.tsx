@@ -19,6 +19,7 @@ interface Props {
 export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [tableOfContents, setTableOfContents] = useState(<TableOfContents tableOfContents={[]} />);
   const [showTableOfContents, setShowTableOfContents] = useState(false);
+  const sider = useRef<HTMLDivElement>(null);
   const [selectedKeys, setSelectedKeys] = useState(['']);
   const [siderWidth, setSiderWidth] = useState(200);
   const changingSiderWidth = useRef<Subscription>(new Subscription());
@@ -34,8 +35,6 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
 
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
-
-  useEffect(() => console.log('Screen render'));
 
   return (
     <BookContext.Provider value={book}>
@@ -74,7 +73,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
             width={showTableOfContents ? siderWidth : 0}
             style={{ overflow: 'auto' }}
             theme="light">
-            {tableOfContents}
+            <div ref={sider}>{tableOfContents}</div>
           </Sider>
           <Content
             style={{
@@ -92,8 +91,13 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
                     throttleTime<MouseEvent>(100)
                   )
                   .subscribe(event => {
-                    if (event.clientX >= 100 && event.clientX < window.innerWidth) {
-                      setSiderWidth(event.clientX);
+                    if (!sider.current) {
+                      return;
+                    }
+
+                    const newWidth = event.clientX - sider.current.getBoundingClientRect().left;
+                    if (newWidth >= 100 && newWidth < window.innerWidth) {
+                      setSiderWidth(newWidth);
                     }
                   });
               }}></div>

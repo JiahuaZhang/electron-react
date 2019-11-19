@@ -9,6 +9,11 @@ import { controller } from './model/epub';
 
 const { Sider } = Layout;
 
+if (process.env.NODE_ENV !== 'production') {
+  const whyDidYouRender = require('@welldone-software/why-did-you-render');
+  whyDidYouRender(React, { include: [/Screen/, /Book/, /Section/] });
+}
+
 const App: React.FC = () => {
   const [state, setState] = useState<
     { type?: string; title?: string; key: number; content: JSX.Element }[]
