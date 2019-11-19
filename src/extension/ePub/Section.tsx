@@ -23,6 +23,10 @@ export const Section: React.FC<Props> = ({ section }) => {
   const book = useContext(BookContext);
 
   useEffect(() => {
+    if (!book) {
+      return;
+    }
+
     book.getChapterRaw(section.id, async (err, text) => {
       if (err) {
         console.error(err);
