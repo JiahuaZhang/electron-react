@@ -12,6 +12,10 @@ interface Props {
 const redirectedHref = (book: EPub, href: string): Promise<string> =>
   new Promise<string>(res => {
     const fileName = href.split('/').pop() || '';
+    if (!Object.values(book.manifest).find(m => m.href.includes(fileName))) {
+      res(href);
+    }
+
     ipcRenderer.send('resource loaded?', book.metadata.title, fileName);
     ipcRenderer.once(`${book.metadata.title}/${fileName} loaded`, () =>
       res(`assets/${book.metadata.title}/${fileName}`)
@@ -31,20 +35,12 @@ export const Section: React.FC<Props> = ({ section }) => {
       if (err) {
         console.error(err);
         alert(err.message);
+        console.log(book.manifest.title, section.id);
+        console.log(book);
         return;
       }
 
-      let matches = text.match(/xlink:href="(.*)"/g) || [];
-      for (const match of matches) {
-        const attributes = match.match(/xlink:href="(?<href>.*)"/);
-        if (!attributes || !attributes.groups) {
-          return;
-        }
-        const href = await redirectedHref(book, attributes.groups.href);
-        text = text.replace(attributes[0], `xlink:href="${href}"`);
-      }
-
-      matches = text.match(/src="(.*?)"/g) || [];
+      let matches = text.match(/src="(.*?)"/g) || [];
       for (const match of matches) {
         const attributes = match.match(/src="(?<src>.*?)"/);
         if (!attributes || !attributes.groups) {
@@ -52,6 +48,16 @@ export const Section: React.FC<Props> = ({ section }) => {
         }
         const href = await redirectedHref(book, attributes.groups.src);
         text = text.replace(attributes[0], `src="${href}"`);
+      }
+
+      matches = text.match(/link.*href="(.*?)"/g) || [];
+      for (const match of matches) {
+        const attributes = match.match(/href="(?<href>.*?)"/);
+        if (!attributes || !attributes.groups) {
+          return;
+        }
+        const href = await redirectedHref(book, attributes.groups.href);
+        text = text.replace(attributes[0], `href="${href}"`);
       }
 
       setHtml(<div dangerouslySetInnerHTML={{ __html: text }}></div>);
