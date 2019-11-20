@@ -74,7 +74,13 @@ const App: React.FC = () => {
           ))}
         </Menu>
       </Sider>
-      <Layout style={{ overflow: 'auto', background: 'white' }}>{renderedContent()}</Layout>
+      <Layout style={{ overflow: 'auto', background: 'white' }}>
+        {
+          <div style={{ width: '100%', height: '100%' }} key={activeKey}>
+            {renderedContent()}
+          </div>
+        }
+      </Layout>
     </Layout>
   );
 };
