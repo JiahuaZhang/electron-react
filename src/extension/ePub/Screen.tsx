@@ -8,6 +8,7 @@ import { EPub } from './book.type';
 import { TableOfContents } from './TableOfContents';
 import { Book } from './Book';
 import { BookContext } from './BookContext';
+import { ConfigPanel } from './ConfigPanel';
 
 const { Header, Content, Sider } = Layout;
 
@@ -17,15 +18,25 @@ interface Props {
 }
 
 export const Screen: React.FC<Props> = ({ book, discard }) => {
-  const [tableOfContents, setTableOfContents] = useState(<TableOfContents tableOfContents={[]} />);
-  const [showTableOfContents, setShowTableOfContents] = useState(false);
+  const [activePanel, setActivePanel] = useState('tableOfContents');
+  const [panels, setPanels] = useState([
+    { id: 'tableOfContents', content: <></> },
+    { id: 'configuration', content: <ConfigPanel /> }
+  ]);
+  const [showPanel, setShowPanel] = useState(false);
   const sider = useRef<HTMLDivElement>(null);
   const [selectedKeys, setSelectedKeys] = useState(['']);
   const [siderWidth, setSiderWidth] = useState(200);
   const changingSiderWidth = useRef<Subscription>(new Subscription());
 
   useEffect(() => {
-    setTableOfContents(<TableOfContents tableOfContents={book.toc} />);
+    setPanels(panels =>
+      panels.map(panel =>
+        panel.id === 'tableOfContents'
+          ? { id: 'tableOfContents', content: <TableOfContents tableOfContents={book.toc} /> }
+          : panel
+      )
+    );
   }, [book]);
 
   useEffect(() => {
@@ -35,6 +46,27 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
 
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
+
+  const getCurrentPanel = () => {
+    const panel = panels.find(({ id }) => id === activePanel);
+    return panel ? panel.content : <></>;
+  };
+
+  const togglePanel = (key: string, id: string) => {
+    if (showPanel) {
+      if (id === activePanel) {
+        setShowPanel(false);
+        setSelectedKeys([]);
+      } else {
+        setSelectedKeys([key]);
+        setActivePanel(id);
+      }
+    } else {
+      setShowPanel(true);
+      setSelectedKeys([key]);
+      setActivePanel(id);
+    }
+  };
 
   return (
     <BookContext.Provider value={book}>
@@ -49,17 +81,11 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
         }}>
         <Header>
           <Menu mode="horizontal" selectedKeys={selectedKeys} style={{ display: 'flex' }}>
-            <Menu.Item
-              onClick={({ key }) => {
-                if (showTableOfContents) {
-                  setSelectedKeys([]);
-                  setShowTableOfContents(false);
-                } else {
-                  setSelectedKeys([key]);
-                  setShowTableOfContents(true);
-                }
-              }}>
+            <Menu.Item onClick={({ key }) => togglePanel(key, 'tableOfContents')}>
               <Icon type="menu" />
+            </Menu.Item>
+            <Menu.Item onClick={({ key }) => togglePanel(key, 'configuration')}>
+              <Icon type="setting" />
             </Menu.Item>
             {discard && (
               <Menu.Item style={{ marginLeft: 'auto' }}>
@@ -78,11 +104,8 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
           </Menu>
         </Header>
         <Layout style={{ overflow: 'hidden' }}>
-          <Sider
-            width={showTableOfContents ? siderWidth : 0}
-            style={{ overflow: 'auto' }}
-            theme="light">
-            <div ref={sider}>{tableOfContents}</div>
+          <Sider width={showPanel ? siderWidth : 0} style={{ overflow: 'auto' }} theme="light">
+            <div ref={sider}>{getCurrentPanel()}</div>
           </Sider>
           <Content
             style={{
@@ -91,7 +114,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
               gridTemplateColumns: 'max-content 1fr'
             }}>
             <div
-              style={{ width: showTableOfContents ? '7px' : 0 }}
+              style={{ width: showPanel ? '7px' : 0 }}
               className="draggable"
               onMouseDown={() => {
                 changingSiderWidth.current = fromEvent<MouseEvent>(document, 'mousemove')
