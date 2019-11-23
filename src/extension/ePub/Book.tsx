@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import './Book.sass';
 import { Section } from './Section';
 import { BookContext } from './BookContext';
 import { manifest } from './book.type';
@@ -63,6 +64,7 @@ export const Book: React.FC<Props> = () => {
 
   return (
     <div
+      className="book"
       tabIndex={0}
       onKeyDown={event => {
         if (event.key === 'ArrowRight') {
