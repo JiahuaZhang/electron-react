@@ -4,6 +4,7 @@ import './Book.sass';
 import { Section } from './Section';
 import { BookContext } from './BookContext';
 import { manifest } from './book.type';
+import { ConfigContext } from './ConfigContext';
 
 const { ipcRenderer } = window.require('electron');
 
@@ -16,6 +17,7 @@ export const Book: React.FC<Props> = () => {
   }[]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const book = React.useContext(BookContext);
+  const { fontSize } = React.useContext(ConfigContext);
 
   useEffect(() => {
     ipcRenderer.send('add reference', book.metadata.title);
@@ -64,6 +66,7 @@ export const Book: React.FC<Props> = () => {
 
   return (
     <div
+      style={{ fontSize: fontSize }}
       className="book"
       tabIndex={0}
       onKeyDown={event => {

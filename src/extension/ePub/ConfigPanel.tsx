@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 
 import './ConfigPanel.sass';
+import { ConfigContext } from './ConfigContext';
 
 interface Props {}
 
 export const ConfigPanel: React.FC<Props> = () => {
-  const [fontSize, setFontSize] = useState(16);
+  const { fontSize, updateFontSize } = useContext(ConfigContext);
 
   return (
     <div className="fontSize">
@@ -14,7 +15,11 @@ export const ConfigPanel: React.FC<Props> = () => {
           color: fontSize === 8 ? '#80808033' : '#00000080',
           fontSize: fontSize > 8 ? fontSize - 2 : 8
         }}
-        onClick={() => setFontSize(size => (size > 8 ? size - 2 : size))}>
+        onClick={() => {
+          if (fontSize > 8) {
+            updateFontSize(fontSize - 2);
+          }
+        }}>
         a
       </div>
       <div style={{ fontSize }}>
@@ -26,7 +31,11 @@ export const ConfigPanel: React.FC<Props> = () => {
           fontSize: fontSize < 72 ? fontSize + 2 : 72,
           color: fontSize === 72 ? '#80808033' : '#000000'
         }}
-        onClick={() => setFontSize(size => (size < 72 ? size + 2 : size))}>
+        onClick={() => {
+          if (fontSize < 72) {
+            updateFontSize(fontSize + 2);
+          }
+        }}>
         A
       </div>
     </div>

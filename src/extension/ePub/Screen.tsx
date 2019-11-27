@@ -9,6 +9,8 @@ import { TableOfContents } from './TableOfContents';
 import { Book } from './Book';
 import { BookContext } from './BookContext';
 import { ConfigPanel } from './ConfigPanel';
+import { useConfig } from './Config';
+import { ConfigContext } from './ConfigContext';
 
 const { Header, Content, Sider } = Layout;
 
@@ -17,6 +19,7 @@ interface Props {
   discard?: () => void;
 }
 
+const { ipcRenderer } = window.require('electron');
 export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [activePanel, setActivePanel] = useState('tableOfContents');
   const [panels, setPanels] = useState([
@@ -28,6 +31,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [selectedKeys, setSelectedKeys] = useState(['']);
   const [siderWidth, setSiderWidth] = useState(200);
   const changingSiderWidth = useRef<Subscription>(new Subscription());
+  const epubConfig = useConfig();
 
   useEffect(() => {
     setPanels(panels =>
@@ -43,6 +47,11 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
     const onMouseUp = () => changingSiderWidth.current.unsubscribe();
 
     window.addEventListener('mouseup', onMouseUp);
+
+    ipcRenderer.send('load epub config');
+    ipcRenderer.once('load epub config', (event, config) => {
+      epubConfig.init(JSON.parse(config));
+    });
 
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
@@ -69,74 +78,76 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   };
 
   return (
-    <BookContext.Provider value={book}>
-      <Layout
-        className="screen"
-        style={{
-          maxHeight: '100%',
-          display: 'grid',
-          gridTemplateRows: 'max-content 1fr',
-          minHeight: 0,
-          minWidth: 0
-        }}>
-        <Header>
-          <Menu mode="horizontal" selectedKeys={selectedKeys} style={{ display: 'flex' }}>
-            <Menu.Item onClick={({ key }) => togglePanel(key, 'tableOfContents')}>
-              <Icon type="menu" />
-            </Menu.Item>
-            <Menu.Item onClick={({ key }) => togglePanel(key, 'configuration')}>
-              <Icon type="setting" />
-            </Menu.Item>
-            {discard && (
-              <Menu.Item style={{ marginLeft: 'auto' }}>
-                <Icon
-                  onClick={discard}
-                  type="close-circle"
-                  theme="filled"
-                  style={{
-                    fontSize: '2rem',
-                    verticalAlign: 'middle',
-                    color: 'red'
-                  }}
-                />
+    <ConfigContext.Provider value={epubConfig}>
+      <BookContext.Provider value={book}>
+        <Layout
+          className="screen"
+          style={{
+            maxHeight: '100%',
+            display: 'grid',
+            gridTemplateRows: 'max-content 1fr',
+            minHeight: 0,
+            minWidth: 0
+          }}>
+          <Header>
+            <Menu mode="horizontal" selectedKeys={selectedKeys} style={{ display: 'flex' }}>
+              <Menu.Item onClick={({ key }) => togglePanel(key, 'tableOfContents')}>
+                <Icon type="menu" />
               </Menu.Item>
-            )}
-          </Menu>
-        </Header>
-        <Layout style={{ overflow: 'hidden' }}>
-          <Sider width={showPanel ? siderWidth : 0} style={{ overflow: 'auto' }} theme="light">
-            <div ref={sider}>{getCurrentPanel()}</div>
-          </Sider>
-          <Content
-            style={{
-              overflow: 'auto',
-              display: 'grid',
-              gridTemplateColumns: 'max-content 1fr'
-            }}>
-            <div
-              style={{ width: showPanel ? '7px' : 0 }}
-              className="draggable"
-              onMouseDown={() => {
-                changingSiderWidth.current = fromEvent<MouseEvent>(document, 'mousemove')
-                  .pipe<MouseEvent, MouseEvent>(
-                    tap(event => event.preventDefault()),
-                    throttleTime<MouseEvent>(100)
-                  )
-                  .subscribe(event => {
-                    if (!sider.current) {
-                      return;
-                    }
+              <Menu.Item onClick={({ key }) => togglePanel(key, 'configuration')}>
+                <Icon type="setting" />
+              </Menu.Item>
+              {discard && (
+                <Menu.Item style={{ marginLeft: 'auto' }}>
+                  <Icon
+                    onClick={discard}
+                    type="close-circle"
+                    theme="filled"
+                    style={{
+                      fontSize: '2rem',
+                      verticalAlign: 'middle',
+                      color: 'red'
+                    }}
+                  />
+                </Menu.Item>
+              )}
+            </Menu>
+          </Header>
+          <Layout style={{ overflow: 'hidden' }}>
+            <Sider width={showPanel ? siderWidth : 0} style={{ overflow: 'auto' }} theme="light">
+              <div ref={sider}>{getCurrentPanel()}</div>
+            </Sider>
+            <Content
+              style={{
+                overflow: 'auto',
+                display: 'grid',
+                gridTemplateColumns: 'max-content 1fr'
+              }}>
+              <div
+                style={{ width: showPanel ? '7px' : 0 }}
+                className="draggable"
+                onMouseDown={() => {
+                  changingSiderWidth.current = fromEvent<MouseEvent>(document, 'mousemove')
+                    .pipe<MouseEvent, MouseEvent>(
+                      tap(event => event.preventDefault()),
+                      throttleTime<MouseEvent>(100)
+                    )
+                    .subscribe(event => {
+                      if (!sider.current) {
+                        return;
+                      }
 
-                    const newWidth = event.clientX - sider.current.getBoundingClientRect().left;
-                    if (newWidth >= 100 && newWidth < window.innerWidth) {
-                      setSiderWidth(newWidth);
-                    }
-                  });
-              }}></div>
-            <Book />
-          </Content>
+                      const newWidth = event.clientX - sider.current.getBoundingClientRect().left;
+                      if (newWidth >= 100 && newWidth < window.innerWidth) {
+                        setSiderWidth(newWidth);
+                      }
+                    });
+                }}></div>
+              <Book />
+            </Content>
+          </Layout>
         </Layout>
-      </Layout>
-    </BookContext.Provider>
+      </BookContext.Provider>
+    </ConfigContext.Provider>
   );
 };
