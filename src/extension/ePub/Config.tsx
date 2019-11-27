@@ -2,12 +2,12 @@ import { useReducer } from 'react';
 
 import { epubConfig, action, epubStyle } from '../../model/epubConfig';
 
-const reducer = (state: epubConfig, action: action): epubConfig => {
-  switch (action.type) {
+const reducer = (state: epubConfig, act: action): epubConfig => {
+  switch (act.type) {
     case 'init':
-      return action.payload as epubConfig;
+      return act.payload as epubConfig;
     case 'update fontSize':
-      return { ...state, style: { fontSize: action.payload as number } };
+      return { ...state, style: { fontSize: act.payload as number } };
     default:
       return state;
   }

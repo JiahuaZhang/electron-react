@@ -54,7 +54,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
     });
 
     return () => window.removeEventListener('mouseup', onMouseUp);
-  }, []);
+  }, [epubConfig]);
 
   const getCurrentPanel = () => {
     const panel = panels.find(({ id }) => id === activePanel);
