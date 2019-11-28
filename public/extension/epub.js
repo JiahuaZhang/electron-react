@@ -56,3 +56,15 @@ ipcMain.on('resource loaded?', (event, bookname, filename) => {
     }
   }
 });
+
+ipcMain.on('load epub config', event => {
+  fs.promises
+    .readFile('./public/data/epub.config.json')
+    .then(config => {
+      event.reply('load epub config', config);
+    })
+    .catch(reason => {
+      event.reply('load epub config', null);
+      console.error('fail to load epub config', reason);
+    });
+});

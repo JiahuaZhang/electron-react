@@ -32,6 +32,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [siderWidth, setSiderWidth] = useState(200);
   const changingSiderWidth = useRef<Subscription>(new Subscription());
   const epubConfig = useConfig();
+  const { init } = epubConfig;
 
   useEffect(() => {
     setPanels(panels =>
@@ -50,11 +51,11 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
 
     ipcRenderer.send('load epub config');
     ipcRenderer.once('load epub config', (event, config) => {
-      epubConfig.init(JSON.parse(config));
+      init(JSON.parse(config));
     });
 
     return () => window.removeEventListener('mouseup', onMouseUp);
-  }, [epubConfig]);
+  }, [init]);
 
   const getCurrentPanel = () => {
     const panel = panels.find(({ id }) => id === activePanel);

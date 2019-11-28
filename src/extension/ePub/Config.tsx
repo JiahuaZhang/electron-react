@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import { useReducer, useCallback } from 'react';
 
 import { epubConfig, action, epubStyle } from '../../model/epubConfig';
 
@@ -31,5 +31,10 @@ export const useConfig = (): EpubConfigSetting => {
 
   const fontSize = style && style.fontSize;
 
-  return { init, style, updateFontSize, fontSize };
+  return {
+    init: useCallback(init, []),
+    style,
+    updateFontSize: useCallback(updateFontSize, []),
+    fontSize
+  };
 };
