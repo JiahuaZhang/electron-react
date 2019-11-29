@@ -9,8 +9,8 @@ import { TableOfContents } from './TableOfContents';
 import { Book } from './Book';
 import { BookContext } from './BookContext';
 import { ConfigPanel } from './Configuration/ConfigPanel';
-import { useConfig } from './Configuration/ConfigHook';
-import { ConfigContext } from './Configuration/ConfigContext';
+import { useConfig } from './Configuration/configHook';
+import { ConfigContext } from './Configuration/configContext';
 
 const { Header, Content, Sider } = Layout;
 const { ipcRenderer } = window.require('electron');
