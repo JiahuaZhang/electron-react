@@ -14,10 +14,11 @@ const reducer = (state: epubConfig, act: action): epubConfig => {
 };
 
 export interface EpubConfigSetting {
-  init: (payload: epubConfig) => void;
+  config: epubConfig;
   style: epubStyle;
-  updateFontSize: (payload: number) => void;
   fontSize: number;
+  init: (payload: epubConfig) => void;
+  updateFontSize: (payload: number) => void;
 }
 
 export const useConfig = (): EpubConfigSetting => {
@@ -32,9 +33,10 @@ export const useConfig = (): EpubConfigSetting => {
   const fontSize = style && style.fontSize;
 
   return {
-    init: useCallback(init, []),
+    config: state,
     style,
-    updateFontSize: useCallback(updateFontSize, []),
-    fontSize
+    fontSize,
+    init: useCallback(init, []),
+    updateFontSize: useCallback(updateFontSize, [])
   };
 };

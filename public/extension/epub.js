@@ -68,3 +68,7 @@ ipcMain.on('load epub config', event => {
       console.error('fail to load epub config', reason);
     });
 });
+
+ipcMain.on('save epub config', (event, config) => {
+  fs.promises.writeFile('./public/data/epub.config.json', config);
+});

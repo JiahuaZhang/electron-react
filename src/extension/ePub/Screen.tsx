@@ -13,13 +13,13 @@ import { useConfig } from './Config';
 import { ConfigContext } from './ConfigContext';
 
 const { Header, Content, Sider } = Layout;
+const { ipcRenderer } = window.require('electron');
 
 interface Props {
   book: EPub;
   discard?: () => void;
 }
 
-const { ipcRenderer } = window.require('electron');
 export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [activePanel, setActivePanel] = useState('tableOfContents');
   const [panels, setPanels] = useState([
@@ -32,30 +32,39 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [siderWidth, setSiderWidth] = useState(200);
   const changingSiderWidth = useRef<Subscription>(new Subscription());
   const epubConfig = useConfig();
-  const { init } = epubConfig;
+  const { init, config } = epubConfig;
 
-  useEffect(() => {
-    setPanels(panels =>
-      panels.map(panel =>
-        panel.id === 'tableOfContents'
-          ? { id: 'tableOfContents', content: <TableOfContents tableOfContents={book.toc} /> }
-          : panel
-      )
-    );
-  }, [book]);
+  useEffect(
+    () =>
+      setPanels(panels =>
+        panels.map(panel =>
+          panel.id === 'tableOfContents'
+            ? { id: 'tableOfContents', content: <TableOfContents tableOfContents={book.toc} /> }
+            : panel
+        )
+      ),
+    [book]
+  );
 
   useEffect(() => {
     const onMouseUp = () => changingSiderWidth.current.unsubscribe();
-
     window.addEventListener('mouseup', onMouseUp);
+    return () => window.removeEventListener('mouseup', onMouseUp);
+  }, []);
 
+  useEffect(() => {
     ipcRenderer.send('load epub config');
     ipcRenderer.once('load epub config', (event, config) => {
       init(JSON.parse(config));
     });
-
-    return () => window.removeEventListener('mouseup', onMouseUp);
   }, [init]);
+
+  useEffect(() => {
+    return () => {
+      if (!config) return;
+      ipcRenderer.send('save epub config', JSON.stringify(config, null, 2));
+    };
+  }, [config]);
 
   const getCurrentPanel = () => {
     const panel = panels.find(({ id }) => id === activePanel);
