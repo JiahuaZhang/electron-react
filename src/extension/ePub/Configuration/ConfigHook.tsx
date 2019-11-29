@@ -1,6 +1,6 @@
 import { useReducer, useCallback } from 'react';
 
-import { epubConfig, action, epubStyle } from '../../model/epubConfig';
+import { epubConfig, action, epubStyle } from '../../../model/epubConfig';
 
 const reducer = (state: epubConfig, act: action): epubConfig => {
   switch (act.type) {

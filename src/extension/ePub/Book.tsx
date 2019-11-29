@@ -4,7 +4,7 @@ import './Book.sass';
 import { Section } from './Section';
 import { BookContext } from './BookContext';
 import { manifest } from './book.type';
-import { ConfigContext } from './ConfigContext';
+import { ConfigContext } from './Configuration/ConfigContext';
 
 const { ipcRenderer } = window.require('electron');
 

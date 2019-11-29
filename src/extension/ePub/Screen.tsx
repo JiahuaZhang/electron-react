@@ -8,9 +8,9 @@ import { EPub } from './book.type';
 import { TableOfContents } from './TableOfContents';
 import { Book } from './Book';
 import { BookContext } from './BookContext';
-import { ConfigPanel } from './ConfigPanel';
-import { useConfig } from './Config';
-import { ConfigContext } from './ConfigContext';
+import { ConfigPanel } from './Configuration/ConfigPanel';
+import { useConfig } from './Configuration/ConfigHook';
+import { ConfigContext } from './Configuration/ConfigContext';
 
 const { Header, Content, Sider } = Layout;
 const { ipcRenderer } = window.require('electron');
