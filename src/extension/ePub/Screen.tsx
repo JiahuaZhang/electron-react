@@ -61,7 +61,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
 
   useEffect(() => {
     return () => {
-      if (!config) return;
+      if (!config || !Object.keys(config).length) return;
       ipcRenderer.send('save epub config', JSON.stringify(config, null, 2));
     };
   }, [config]);
