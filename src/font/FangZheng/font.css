@@ -1,0 +1,19 @@
+@font-face {
+  font-family: '方正黑体';
+  src: url('./FangZhengHeiTi-GBK.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: '方正书宋';
+  src: url('./FangZhengShuSong-GBK.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: '方正仿宋';
+  src: url('./FangZhengFangSong-GBK-1.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: '方正楷体';
+  src: url('./FangZhengKaiTi-GBK.ttf') format('truetype');
+}
