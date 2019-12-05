@@ -1,5 +1,12 @@
 {
   "style": {
-    "fontSize": 16
+    "fontSize": 20,
+    "fontFamily": {
+      "english": "Georgia",
+      "chinese": "方正楷体"
+    }
+  },
+  "setting": {
+    "last_focus_font_type": "chinese"
   }
 }

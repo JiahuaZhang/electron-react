@@ -6,7 +6,7 @@ import { ConfigContext } from './configContext';
 interface Props {}
 
 export const FontSizeConfig: React.FC<Props> = () => {
-  const { fontSize, updateFontSize } = useContext(ConfigContext);
+  const { fontSize = 16, updateFontSize } = useContext(ConfigContext);
 
   return (
     <div className="fontSize">

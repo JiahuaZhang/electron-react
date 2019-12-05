@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Tabs, Radio } from 'antd';
 
 import './FontFamily.sass';
+import { ConfigContext } from './configContext';
 
 const { TabPane } = Tabs;
 
 interface Props {}
 
 export const FontFamily: React.FC<Props> = () => {
-  const [english_font, setEnglish_font] = useState('');
-  const [chinese_font, setChinese_font] = useState('');
+  const {
+    setting = {},
+    english_font,
+    chinese_font,
+    updateEnglishFont,
+    updateChineseFont,
+    updateLastFocusFont
+  } = useContext(ConfigContext);
+  const [activeKey, setActiveKey] = useState('english');
+
+  useEffect(() => {
+    setActiveKey(setting.last_focus_font_type || 'english');
+  }, [setting]);
 
   const default_english_fonts = ['Arial', 'Georgia', 'Helvetica', 'Tahoma'];
   const default_chinese_fonts = [
@@ -22,7 +34,12 @@ export const FontFamily: React.FC<Props> = () => {
   ];
 
   return (
-    <Tabs defaultActiveKey="chinese">
+    <Tabs
+      activeKey={activeKey}
+      onTabClick={(fontKey: string) => {
+        updateLastFocusFont(fontKey);
+        setActiveKey(fontKey);
+      }}>
       <TabPane tab="Font" key="english">
         <Radio.Group buttonStyle="solid" value={english_font}>
           {default_english_fonts.map(font => (
@@ -33,9 +50,9 @@ export const FontFamily: React.FC<Props> = () => {
                 event.persist();
                 const { value } = event.target as HTMLInputElement;
                 if (value === english_font) {
-                  setEnglish_font('');
+                  updateEnglishFont('');
                 } else {
-                  setEnglish_font(value);
+                  updateEnglishFont(value);
                 }
               }}
               style={{
@@ -58,9 +75,9 @@ export const FontFamily: React.FC<Props> = () => {
                 event.persist();
                 const { value } = event.target as HTMLInputElement;
                 if (value === chinese_font) {
-                  setChinese_font('');
+                  updateChineseFont('');
                 } else {
-                  setChinese_font(value);
+                  updateChineseFont(value);
                 }
               }}
               style={{
