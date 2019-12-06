@@ -10,6 +10,19 @@ const { ipcRenderer } = window.require('electron');
 
 interface Props {}
 
+const default_english_fonts = [
+  '-apple-system',
+  'BlinkMacSystemFont',
+  'Segoe UI',
+  'Roboto',
+  'Helvetica',
+  'Arial',
+  'sans-serif',
+  'Apple Color Emoji',
+  'Segoe UI Emoji',
+  'Segoe UI Symbol'
+];
+
 export const Book: React.FC<Props> = () => {
   const [sections, setSections] = useState([{}] as {
     flow: manifest;
@@ -17,7 +30,11 @@ export const Book: React.FC<Props> = () => {
   }[]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const book = React.useContext(BookContext);
-  const { fontSize } = React.useContext(ConfigContext);
+  const { fontSize, chinese_font, english_font } = React.useContext(ConfigContext);
+
+  const fontFamily = english_font
+    ? `${english_font}, ${chinese_font}`
+    : default_english_fonts.concat(chinese_font || '').join(',');
 
   useEffect(() => {
     ipcRenderer.send('add reference', book.metadata.title);
@@ -66,7 +83,7 @@ export const Book: React.FC<Props> = () => {
 
   return (
     <div
-      style={{ fontSize: fontSize }}
+      style={{ fontSize: fontSize, fontFamily }}
       className="book"
       tabIndex={0}
       onKeyDown={event => {
