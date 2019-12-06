@@ -15,6 +15,14 @@ export interface epubConfig {
   setting: epubSetting;
 }
 
+export const default_epub_config: epubConfig = {
+  style: {
+    fontSize: 16,
+    fontFamily: {}
+  },
+  setting: {}
+};
+
 export interface action {
   type:
     | 'init'

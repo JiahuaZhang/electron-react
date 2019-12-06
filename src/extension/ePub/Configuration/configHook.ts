@@ -1,6 +1,12 @@
-import { useReducer, useCallback } from 'react';
+import { useReducer } from 'react';
 
-import { epubConfig, action, epubStyle, epubSetting } from '../../../model/epubConfig';
+import {
+  epubConfig,
+  action,
+  epubStyle,
+  epubSetting,
+  default_epub_config
+} from '../../../model/epubConfig';
 
 const reducer = (state: epubConfig, act: action): epubConfig => {
   const new_state = { ...state };
@@ -34,25 +40,13 @@ const reducer = (state: epubConfig, act: action): epubConfig => {
 
 export interface EpubConfigSetting {
   config: epubConfig;
+  dispatch: React.Dispatch<action>;
   style: epubStyle;
   setting: epubSetting;
   fontSize?: number;
   chinese_font?: string;
   english_font?: string;
-  init: (payload: epubConfig) => void;
-  updateLastFocusFont: (payload: string) => void;
-  updateFontSize: (payload: number) => void;
-  updateChineseFont: (payload: string) => void;
-  updateEnglishFont: (payload: string) => void;
 }
-
-const default_epub_config: epubConfig = {
-  style: {
-    fontSize: 16,
-    fontFamily: {}
-  },
-  setting: {}
-};
 
 export const useConfig = (): EpubConfigSetting => {
   const [state = default_epub_config, dispatch] = useReducer(reducer, {} as epubConfig);
@@ -62,26 +56,13 @@ export const useConfig = (): EpubConfigSetting => {
   const chinese_font = style && style.fontFamily && style.fontFamily.chinese;
   const english_font = style && style.fontFamily && style.fontFamily.english;
 
-  const init = (payload: epubConfig) => dispatch({ type: 'init', payload });
-  const updateLastFocusFont = (payload: string) =>
-    dispatch({ type: 'update last focus font type', payload });
-  const updateFontSize = (payload: number) => dispatch({ type: 'update fontSize', payload });
-  const updateChineseFont = (payload: string) =>
-    dispatch({ type: 'update chinese font family', payload });
-  const updateEnglishFont = (payload: string) =>
-    dispatch({ type: 'update english font family', payload });
-
   return {
     config: state,
+    dispatch,
     style,
     setting,
     fontSize,
     chinese_font,
-    english_font,
-    init: useCallback(init, []),
-    updateLastFocusFont: useCallback(updateLastFocusFont, []),
-    updateFontSize: useCallback(updateFontSize, []),
-    updateChineseFont: useCallback(updateChineseFont, []),
-    updateEnglishFont: useCallback(updateEnglishFont, [])
+    english_font
   };
 };

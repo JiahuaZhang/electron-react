@@ -6,7 +6,7 @@ import { ConfigContext } from './configContext';
 interface Props {}
 
 export const FontSizeConfig: React.FC<Props> = () => {
-  const { fontSize = 16, updateFontSize } = useContext(ConfigContext);
+  const { fontSize = 16, dispatch } = useContext(ConfigContext);
 
   return (
     <div className="fontSize">
@@ -17,7 +17,7 @@ export const FontSizeConfig: React.FC<Props> = () => {
         }}
         onClick={() => {
           if (fontSize > 8) {
-            updateFontSize(fontSize - 2);
+            dispatch({ type: 'update fontSize', payload: fontSize - 2 });
           }
         }}>
         a
@@ -33,7 +33,7 @@ export const FontSizeConfig: React.FC<Props> = () => {
         }}
         onClick={() => {
           if (fontSize < 72) {
-            updateFontSize(fontSize + 2);
+            dispatch({ type: 'update fontSize', payload: fontSize + 2 });
           }
         }}>
         A

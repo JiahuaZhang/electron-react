@@ -9,14 +9,7 @@ const { TabPane } = Tabs;
 interface Props {}
 
 export const FontFamily: React.FC<Props> = () => {
-  const {
-    setting = {},
-    english_font,
-    chinese_font,
-    updateEnglishFont,
-    updateChineseFont,
-    updateLastFocusFont
-  } = useContext(ConfigContext);
+  const { setting = {}, dispatch, english_font, chinese_font } = useContext(ConfigContext);
   const [activeKey, setActiveKey] = useState('english');
 
   useEffect(() => {
@@ -37,7 +30,7 @@ export const FontFamily: React.FC<Props> = () => {
     <Tabs
       activeKey={activeKey}
       onTabClick={(fontKey: string) => {
-        updateLastFocusFont(fontKey);
+        dispatch({ type: 'update last focus font type', payload: fontKey });
         setActiveKey(fontKey);
       }}>
       <TabPane tab="Font" key="english">
@@ -50,9 +43,9 @@ export const FontFamily: React.FC<Props> = () => {
                 event.persist();
                 const { value } = event.target as HTMLInputElement;
                 if (value === english_font) {
-                  updateEnglishFont('');
+                  dispatch({ type: 'update english font family', payload: '' });
                 } else {
-                  updateEnglishFont(value);
+                  dispatch({ type: 'update english font family', payload: value });
                 }
               }}
               style={{
@@ -75,9 +68,9 @@ export const FontFamily: React.FC<Props> = () => {
                 event.persist();
                 const { value } = event.target as HTMLInputElement;
                 if (value === chinese_font) {
-                  updateChineseFont('');
+                  dispatch({ type: 'update chinese font family', payload: '' });
                 } else {
-                  updateChineseFont(value);
+                  dispatch({ type: 'update chinese font family', payload: value });
                 }
               }}
               style={{

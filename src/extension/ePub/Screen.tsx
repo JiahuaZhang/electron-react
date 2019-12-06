@@ -32,7 +32,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [siderWidth, setSiderWidth] = useState(200);
   const changingSiderWidth = useRef<Subscription>(new Subscription());
   const epubConfig = useConfig();
-  const { init, config } = epubConfig;
+  const { config, dispatch } = epubConfig;
 
   useEffect(
     () =>
@@ -55,9 +55,9 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   useEffect(() => {
     ipcRenderer.send('load epub config');
     ipcRenderer.once('load epub config', (event, config) => {
-      init(JSON.parse(config));
+      dispatch({ type: 'init', payload: JSON.parse(config) });
     });
-  }, [init]);
+  }, [dispatch]);
 
   useEffect(() => {
     return () => {
