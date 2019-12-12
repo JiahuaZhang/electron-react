@@ -52,9 +52,9 @@ export const useConfig = (): EpubConfigSetting => {
   const [state = default_epub_config, dispatch] = useReducer(reducer, {} as epubConfig);
 
   const { style, setting } = state;
-  const fontSize = style && style.fontSize;
-  const chinese_font = style && style.fontFamily && style.fontFamily.chinese;
-  const english_font = style && style.fontFamily && style.fontFamily.english;
+  const fontSize = style?.fontSize;
+  const chinese_font = style?.fontFamily?.chinese;
+  const english_font = style?.fontFamily?.english;
 
   return {
     config: state,

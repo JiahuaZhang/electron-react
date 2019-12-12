@@ -110,7 +110,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
   const handleFileIconClick = (info: fileIconProps) => {
     const { type, parentPath, filename } = info;
 
-    if (type && type === 'document') {
+    if (type === 'document') {
       return adjustDirectory(path.join(parentPath, filename));
     }
 
@@ -136,7 +136,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
         style={{ cursor: 'pointer' }}>
         <FileIcon {...rest} size={65} />
         <br />
-        {rest.filename && rest.filename.length > 7 && <Text>{rest.filename}</Text>}
+        {rest.filename?.length > 7 && <Text>{rest.filename}</Text>}
       </Col>
     );
   };
