@@ -1,3 +1,19 @@
+# Hack
+
+## Infinite reload when developing
+
+Recently, `create-react-app` will reload the application when it detects file changes at `public` folder with this [pull request](https://github.com/facebook/create-react-app/pull/1546). However, for this epub-reader app, it will store all images, stylesheets relating to the epub to `public` folder when it openes a book.
+
+Hence, opening a book => will store its images, stylesheets to `public` folder => `react-scripts` detects update on `public` folder => reload => ...
+
+I tried to store these files inside the `src` folder, but it seems the application can't load them dynamically.
+
+Hence, to workaround this it, change [this line](https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/config/webpackDevServer.config.js#L62) to `watchContentBase: false` will do the hack.
+
+A better alternative might just do `yarn eject` then update the webpack config.
+
+---
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
