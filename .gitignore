@@ -28,3 +28,6 @@ yarn-error.log*
 
 # generated tmp assets
 public/assets/*
+
+# generated config
+public/data/*

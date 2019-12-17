@@ -33,7 +33,13 @@ export interface TocElement {
   order: number;
   title: string;
   id: string;
-  href?: string;
+  href: string;
+  'media-type'?:
+    | 'text/html'
+    | 'text/xml'
+    | 'application/xml'
+    | 'application/xhtml+xml'
+    | 'image/svg+xml';
 }
 
 export interface EPub {

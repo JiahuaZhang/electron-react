@@ -72,3 +72,19 @@ ipcMain.on('load epub config', event => {
 ipcMain.on('save epub config', (event, config) => {
   fs.promises.writeFile('./public/data/epub.config.json', config);
 });
+
+ipcMain.on('load book data', (event, bookname) => {
+  if (fs.existsSync(`./public/data/${bookname}.json`)) {
+    fs.promises
+      .readFile(`./public/data/${bookname}.json`)
+      .then(data => event.reply(`load book ${bookname} data`, data));
+  } else {
+    fs.promises
+      .writeFile(`./public/data/${bookname}.json`, null)
+      .then(data => event.reply(`load book ${bookname} data`, data));
+  }
+});
+
+ipcMain.on('save book data', (event, bookname, data) => {
+  fs.promises.writeFile(`./public/data/${bookname}.json`, data);
+});
