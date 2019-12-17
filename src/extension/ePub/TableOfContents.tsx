@@ -1,7 +1,7 @@
 import React from 'react';
 import { Menu } from 'antd';
 
-import { TocElement } from './book.type';
+import { TocElement } from './model/book.type';
 
 const { SubMenu } = Menu;
 

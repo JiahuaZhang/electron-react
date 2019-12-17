@@ -4,7 +4,7 @@ import { fromEvent, Subscription } from 'rxjs';
 import { throttleTime, tap } from 'rxjs/operators';
 
 import './Screen.sass';
-import { EPub } from './book.type';
+import { EPub } from './model/book.type';
 import { TableOfContents } from './TableOfContents';
 import { Book } from './Book';
 import { BookContext } from './BookContext';

@@ -1,8 +1,8 @@
 import React from 'react';
 import path from 'path';
 
-import { fileHandler, controller } from '../../model/epub';
-import { EPub } from './book.type';
+import { fileHandler, controller } from './model/epub';
+import { EPub } from './model/book.type';
 import { Screen } from './Screen';
 
 const epub = window.require('epub');

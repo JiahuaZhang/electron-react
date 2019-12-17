@@ -1,5 +1,5 @@
 import React from 'react';
 
-import { EPub } from './book.type';
+import { EPub } from './model/book.type';
 
 export const BookContext = React.createContext({} as EPub);

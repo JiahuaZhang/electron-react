@@ -4,7 +4,7 @@ import FileIcon from 'react-file-icon';
 import path from 'path';
 
 import { getType } from './extensions';
-import { fileIconProps, fileHandler } from '../../model/epub';
+import { fileIconProps, fileHandler } from '../../extension/ePub/model/epub';
 
 const { TabPane } = Tabs;
 const { Text } = Typography;

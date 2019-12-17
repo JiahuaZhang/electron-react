@@ -1,7 +1,7 @@
 import { useReducer, useEffect } from 'react';
 
-import { BookData, defaultBookData } from '../../../model/bookData';
-import { EPub, manifest } from '../book.type';
+import { BookData, defaultBookData } from '../model/bookData';
+import { EPub, manifest } from '../model/book.type';
 
 const { ipcRenderer } = window.require('electron');
 
@@ -39,9 +39,10 @@ const reducer = (state: BookData, { type, payload }: BookDataAction) => {
 
 export const useBookData = (book: EPub): BookDataHook => {
   const [state, dispatch] = useReducer(reducer, defaultBookData);
+  const { title } = book.metadata;
 
   useEffect(() => {
-    ipcRenderer.send('add reference', book.metadata.title);
+    ipcRenderer.send('add reference', title);
 
     const assets: { [key: string]: manifest } = {};
     Object.values(book.manifest).forEach(m => {
@@ -58,16 +59,16 @@ export const useBookData = (book: EPub): BookDataHook => {
           console.error(error);
           return;
         }
-        ipcRenderer.send('store asset', book.metadata.title, fileName, data);
+        ipcRenderer.send('store asset', title, fileName, data);
       })
     );
 
-    return () => ipcRenderer.send('remove reference', book.metadata.title);
-  }, [book]);
+    return () => ipcRenderer.send('remove reference', title);
+  }, [book, title]);
 
   useEffect(() => {
-    ipcRenderer.send('load book data', book.metadata.title);
-    ipcRenderer.once(`load book ${book.metadata.title} data`, (event, data) => {
+    ipcRenderer.send('load book data', title);
+    ipcRenderer.once(`load book ${title} data`, (event, data) => {
       data = JSON.parse(data);
       if (!data) {
         dispatch({ type: BookDataType.init_with_default });
@@ -75,12 +76,11 @@ export const useBookData = (book: EPub): BookDataHook => {
         dispatch({ type: BookDataType.load, payload: data });
       }
     });
-  }, [dispatch]);
+  }, [dispatch, title]);
 
   useEffect(() => {
-    return () =>
-      ipcRenderer.send('save book data', book.metadata.title, JSON.stringify(state, null, 2));
-  }, [state]);
+    return () => ipcRenderer.send('save book data', title, JSON.stringify(state, null, 2));
+  }, [state, title]);
 
   return { state, dispatch };
 };

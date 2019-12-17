@@ -6,7 +6,7 @@ import {
   epubStyle,
   epubSetting,
   default_epub_config
-} from '../../../model/epubConfig';
+} from '../model/epubConfig';
 
 const reducer = (state: epubConfig, act: action): epubConfig => {
   const new_state = { ...state };
