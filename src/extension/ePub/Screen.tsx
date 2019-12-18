@@ -31,7 +31,6 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [siderWidth, setSiderWidth] = useState(200);
   const changingSiderWidth = useRef<Subscription>(new Subscription());
   const epubConfig = useConfig();
-  const { config, dispatch } = epubConfig;
 
   useEffect(
     () =>
