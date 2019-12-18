@@ -2,12 +2,11 @@ import React from 'react';
 import { Menu } from 'antd';
 
 import { TocElement } from './model/book.type';
+import { BookContext } from './BookContext';
 
 const { SubMenu } = Menu;
 
-interface Props {
-  tableOfContents: TocElement[];
-}
+interface Props {}
 
 interface content {
   title: string;
@@ -54,7 +53,8 @@ const renderContents = (content: content): JSX.Element => {
   }
 };
 
-export const TableOfContents: React.FC<Props> = ({ tableOfContents }) => {
-  const contents = getNestedContents(filterDuplicateContent(tableOfContents));
+export const TableOfContents: React.FC<Props> = () => {
+  const book = React.useContext(BookContext);
+  const contents = getNestedContents(filterDuplicateContent(book.toc));
   return <Menu mode="inline">{contents.map(renderContents)}</Menu>;
 };

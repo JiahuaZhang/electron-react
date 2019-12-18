@@ -40,7 +40,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
       setPanels(panels =>
         panels.map(panel =>
           panel.id === 'tableOfContents'
-            ? { id: 'tableOfContents', content: <TableOfContents tableOfContents={book.toc} /> }
+            ? { id: 'tableOfContents', content: <TableOfContents /> }
             : panel
         )
       ),
