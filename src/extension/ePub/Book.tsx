@@ -5,7 +5,7 @@ import { Section } from './Section';
 import { BookContext } from './BookContext';
 import { manifest } from './model/book.type';
 import { ConfigContext } from './Configuration/configContext';
-import { useBookData, BookDataType } from './Data/bookDataHook';
+import { BookDataType } from './Data/bookDataHook';
 import { BookDataContext } from './Data/bookDataContext';
 
 interface Props {}
@@ -30,7 +30,7 @@ export const Book: React.FC<Props> = () => {
   const book = React.useContext(BookContext);
   const { fontSize, chinese_font, english_font } = React.useContext(ConfigContext);
   const [sections, setSections] = useState(initSections(book.flow));
-  const bookData = useBookData(book);
+  const bookData = React.useContext(BookDataContext);
   const { state, dispatch } = bookData;
   const { index } = state;
 
@@ -49,20 +49,18 @@ export const Book: React.FC<Props> = () => {
   }, [index, sections]);
 
   return (
-    <BookDataContext.Provider value={bookData}>
-      <div
-        style={{ fontSize: fontSize, fontFamily }}
-        className="book"
-        tabIndex={0}
-        onKeyDown={event => {
-          if (event.key === 'ArrowRight' && index + 1 < sections.length) {
-            dispatch({ type: BookDataType.update_page, payload: index + 1 });
-          } else if (event.key === 'ArrowLeft' && index - 1 >= 0) {
-            dispatch({ type: BookDataType.update_page, payload: index - 1 });
-          }
-        }}>
-        {sections[index].section}
-      </div>
-    </BookDataContext.Provider>
+    <div
+      style={{ fontSize: fontSize, fontFamily }}
+      className="book"
+      tabIndex={0}
+      onKeyDown={event => {
+        if (event.key === 'ArrowRight' && index + 1 < sections.length) {
+          dispatch({ type: BookDataType.update_page, payload: index + 1 });
+        } else if (event.key === 'ArrowLeft' && index - 1 >= 0) {
+          dispatch({ type: BookDataType.update_page, payload: index - 1 });
+        }
+      }}>
+      {sections[index].section}
+    </div>
   );
 };
