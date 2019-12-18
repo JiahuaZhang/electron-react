@@ -2,11 +2,11 @@
   "style": {
     "fontSize": 22,
     "fontFamily": {
-      "english": "Georgia",
+      "english": "",
       "chinese": "方正楷体"
     }
   },
   "setting": {
-    "last_focus_font_type": "chinese"
+    "last_focus_font_type": "english"
   }
 }

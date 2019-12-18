@@ -3,6 +3,7 @@ import { Tabs, Radio } from 'antd';
 
 import './FontFamily.sass';
 import { ConfigContext } from './configContext';
+import { ConfigType } from './configHook';
 
 const { TabPane } = Tabs;
 
@@ -30,7 +31,7 @@ export const FontFamily: React.FC<Props> = () => {
     <Tabs
       activeKey={activeKey}
       onTabClick={(fontKey: string) => {
-        dispatch({ type: 'update last focus font type', payload: fontKey });
+        dispatch({ type: ConfigType.update_last_focus_font_type, payload: fontKey });
         setActiveKey(fontKey);
       }}>
       <TabPane tab="Font" key="english">
@@ -43,9 +44,9 @@ export const FontFamily: React.FC<Props> = () => {
                 event.persist();
                 const { value } = event.target as HTMLInputElement;
                 if (value === english_font) {
-                  dispatch({ type: 'update english font family', payload: '' });
+                  dispatch({ type: ConfigType.update_english_font_family, payload: '' });
                 } else {
-                  dispatch({ type: 'update english font family', payload: value });
+                  dispatch({ type: ConfigType.update_english_font_family, payload: value });
                 }
               }}
               style={{
@@ -68,9 +69,9 @@ export const FontFamily: React.FC<Props> = () => {
                 event.persist();
                 const { value } = event.target as HTMLInputElement;
                 if (value === chinese_font) {
-                  dispatch({ type: 'update chinese font family', payload: '' });
+                  dispatch({ type: ConfigType.update_chinese_font_family, payload: '' });
                 } else {
-                  dispatch({ type: 'update chinese font family', payload: value });
+                  dispatch({ type: ConfigType.update_chinese_font_family, payload: value });
                 }
               }}
               style={{

@@ -9,7 +9,7 @@ import { TableOfContents } from './TableOfContents';
 import { Book } from './Book';
 import { BookContext } from './BookContext';
 import { ConfigPanel } from './Configuration/ConfigPanel';
-import { useConfig } from './Configuration/configHook';
+import { useConfig, ConfigType } from './Configuration/configHook';
 import { ConfigContext } from './Configuration/configContext';
 
 const { Header, Content, Sider } = Layout;
@@ -55,7 +55,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   useEffect(() => {
     ipcRenderer.send('load epub config');
     ipcRenderer.once('load epub config', (event, config) => {
-      dispatch({ type: 'init', payload: JSON.parse(config) });
+      dispatch({ type: ConfigType.init, payload: JSON.parse(config) });
     });
   }, [dispatch]);
 

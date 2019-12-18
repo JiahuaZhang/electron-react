@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 
 import './FontSizeConfig.sass';
 import { ConfigContext } from './configContext';
+import { ConfigType } from './configHook';
 
 interface Props {}
 
@@ -17,7 +18,7 @@ export const FontSizeConfig: React.FC<Props> = () => {
         }}
         onClick={() => {
           if (fontSize > 8) {
-            dispatch({ type: 'update fontSize', payload: fontSize - 2 });
+            dispatch({ type: ConfigType.update_fontSize, payload: fontSize - 2 });
           }
         }}>
         a
@@ -33,7 +34,7 @@ export const FontSizeConfig: React.FC<Props> = () => {
         }}
         onClick={() => {
           if (fontSize < 72) {
-            dispatch({ type: 'update fontSize', payload: fontSize + 2 });
+            dispatch({ type: ConfigType.update_fontSize, payload: fontSize + 2 });
           }
         }}>
         A

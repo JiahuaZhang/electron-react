@@ -1,36 +1,43 @@
 import { useReducer } from 'react';
 
-import {
-  epubConfig,
-  action,
-  epubStyle,
-  epubSetting,
-  default_epub_config
-} from '../model/epubConfig';
+import { epubConfig, epubStyle, epubSetting, default_epub_config } from '../model/epubConfig';
 
-const reducer = (state: epubConfig, act: action): epubConfig => {
+export enum ConfigType {
+  init,
+  update_last_focus_font_type,
+  update_fontSize,
+  update_chinese_font_family,
+  update_english_font_family
+}
+
+export interface ConfigAction {
+  type: ConfigType;
+  payload?: number | string | epubConfig;
+}
+
+const reducer = (state: epubConfig, { type, payload }: ConfigAction): epubConfig => {
   const new_state = { ...state };
-  switch (act.type) {
-    case 'init':
-      return act.payload as epubConfig;
-    case 'update last focus font type':
-      new_state.setting.last_focus_font_type = act.payload as string;
+  switch (type) {
+    case ConfigType.init:
+      return payload as epubConfig;
+    case ConfigType.update_last_focus_font_type:
+      new_state.setting.last_focus_font_type = payload as string;
       return new_state;
-    case 'update fontSize':
-      new_state.style.fontSize = act.payload as number;
+    case ConfigType.update_fontSize:
+      new_state.style.fontSize = payload as number;
       return new_state;
-    case 'update chinese font family':
+    case ConfigType.update_chinese_font_family:
       if (new_state.style.fontFamily) {
-        new_state.style.fontFamily.chinese = act.payload as string;
+        new_state.style.fontFamily.chinese = payload as string;
       } else {
-        new_state.style.fontFamily = { chinese: act.payload as string };
+        new_state.style.fontFamily = { chinese: payload as string };
       }
       return new_state;
-    case 'update english font family':
+    case ConfigType.update_english_font_family:
       if (new_state.style.fontFamily) {
-        new_state.style.fontFamily.english = act.payload as string;
+        new_state.style.fontFamily.english = payload as string;
       } else {
-        new_state.style.fontFamily = { english: act.payload as string };
+        new_state.style.fontFamily = { english: payload as string };
       }
       return new_state;
     default:
@@ -40,7 +47,7 @@ const reducer = (state: epubConfig, act: action): epubConfig => {
 
 export interface EpubConfigSetting {
   config: epubConfig;
-  dispatch: React.Dispatch<action>;
+  dispatch: React.Dispatch<ConfigAction>;
   style: epubStyle;
   setting: epubSetting;
   fontSize?: number;

@@ -18,17 +18,9 @@ export interface epubConfig {
 export const default_epub_config: epubConfig = {
   style: {
     fontSize: 16,
-    fontFamily: {}
+    fontFamily: {
+      chinese: '方正楷体'
+    }
   },
   setting: {}
 };
-
-export interface action {
-  type:
-    | 'init'
-    | 'update last focus font type'
-    | 'update fontSize'
-    | 'update chinese font family'
-    | 'update english font family';
-  payload: number | string | epubConfig;
-}
