@@ -1,6 +1,8 @@
-import { useReducer } from 'react';
+import { useReducer, useEffect } from 'react';
 
 import { epubConfig, epubStyle, epubSetting, default_epub_config } from '../model/epubConfig';
+
+const { ipcRenderer } = window.require('electron');
 
 export enum ConfigType {
   init,
@@ -62,6 +64,20 @@ export const useConfig = (): EpubConfigSetting => {
   const fontSize = style?.fontSize;
   const chinese_font = style?.fontFamily?.chinese;
   const english_font = style?.fontFamily?.english;
+
+  useEffect(() => {
+    ipcRenderer.send('load epub config');
+    ipcRenderer.once('load epub config', (event, config) => {
+      dispatch({ type: ConfigType.init, payload: JSON.parse(config) });
+    });
+  }, [dispatch]);
+
+  useEffect(() => {
+    return () => {
+      if (!state || !Object.keys(state).length) return;
+      ipcRenderer.send('save epub config', JSON.stringify(state, null, 2));
+    };
+  }, [state]);
 
   return {
     config: state,

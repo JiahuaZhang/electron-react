@@ -9,11 +9,10 @@ import { TableOfContents } from './TableOfContents';
 import { Book } from './Book';
 import { BookContext } from './BookContext';
 import { ConfigPanel } from './Configuration/ConfigPanel';
-import { useConfig, ConfigType } from './Configuration/configHook';
+import { useConfig } from './Configuration/configHook';
 import { ConfigContext } from './Configuration/configContext';
 
 const { Header, Content, Sider } = Layout;
-const { ipcRenderer } = window.require('electron');
 
 interface Props {
   book: EPub;
@@ -51,20 +50,6 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
     window.addEventListener('mouseup', onMouseUp);
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
-
-  useEffect(() => {
-    ipcRenderer.send('load epub config');
-    ipcRenderer.once('load epub config', (event, config) => {
-      dispatch({ type: ConfigType.init, payload: JSON.parse(config) });
-    });
-  }, [dispatch]);
-
-  useEffect(() => {
-    return () => {
-      if (!config || !Object.keys(config).length) return;
-      ipcRenderer.send('save epub config', JSON.stringify(config, null, 2));
-    };
-  }, [config]);
 
   const getCurrentPanel = () => {
     const panel = panels.find(({ id }) => id === activePanel);
