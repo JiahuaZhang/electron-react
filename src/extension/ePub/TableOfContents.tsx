@@ -2,7 +2,7 @@ import React from 'react';
 import { Menu } from 'antd';
 
 import { TocElement } from './model/book.type';
-import { BookContext } from './BookContext';
+import { BookContext } from './bookContext';
 
 const { SubMenu } = Menu;
 

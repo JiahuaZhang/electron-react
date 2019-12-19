@@ -11,7 +11,17 @@ const { Sider } = Layout;
 
 if (process.env.NODE_ENV !== 'production') {
   const whyDidYouRender = require('@welldone-software/why-did-you-render');
-  whyDidYouRender(React, { include: [/Screen/, /Book/, /Section/] });
+  whyDidYouRender(React, {
+    include: [
+      /Screen/,
+      /Book/,
+      /Section/,
+      /TableOfContents/,
+      /ConfigPanel/,
+      /FontFamily/,
+      /FontSizeConfig/
+    ]
+  });
 }
 
 const App: React.FC = () => {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import './Book.sass';
 import { Section } from './Section';
-import { BookContext } from './BookContext';
+import { BookContext } from './bookContext';
 import { manifest } from './model/book.type';
 import { ConfigContext } from './Configuration/configContext';
 import { BookDataType } from './Data/bookDataHook';

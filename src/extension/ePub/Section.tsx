@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 
 import { manifest, EPub } from './model/book.type';
-import { BookContext } from './BookContext';
+import { BookContext } from './bookContext';
 
 const { ipcRenderer } = window.require('electron');
 
