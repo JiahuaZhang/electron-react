@@ -29,7 +29,7 @@ const reducer = (state: BookData, { type, payload }: BookDataAction) => {
     case BookDataType.init_with_default:
       return defaultBookData;
     case BookDataType.update_page:
-      new_state.index = payload as number;
+      new_state.page = payload as string;
       return new_state;
 
     default:

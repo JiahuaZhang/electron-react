@@ -32,21 +32,30 @@ export const Book: React.FC<Props> = () => {
   const [sections, setSections] = useState(initSections(book.flow));
   const bookData = React.useContext(BookDataContext);
   const { state, dispatch } = bookData;
-  const { index } = state;
+  const { page } = state;
 
   const fontFamily = english_font
     ? `${english_font}, ${chinese_font}`
     : default_english_fonts.concat(chinese_font || '').join(',');
 
   useEffect(() => {
-    if (!sections[index].section) {
-      setSections(prev => {
-        const new_state = [...prev];
-        new_state[index].section = <Section section={new_state[index].flow} />;
-        return new_state;
-      });
+    if (!page) {
+      return dispatch({ type: BookDataType.update_page, payload: sections[0].flow.href });
     }
-  }, [index, sections]);
+
+    if (!sections.find(({ flow: { href } }) => page.includes(href))?.section) {
+      setSections(prev =>
+        prev.map(section => {
+          if (page.includes(section.flow.href)) {
+            const newSection = { ...section };
+            newSection.section = <Section section={newSection.flow} />;
+            return newSection;
+          }
+          return section;
+        })
+      );
+    }
+  }, [page, sections]);
 
   return (
     <div
@@ -54,13 +63,14 @@ export const Book: React.FC<Props> = () => {
       className="book"
       tabIndex={0}
       onKeyDown={event => {
+        const index = book.flow.findIndex(({ href }) => page.includes(href));
         if (event.key === 'ArrowRight' && index + 1 < sections.length) {
-          dispatch({ type: BookDataType.update_page, payload: index + 1 });
+          dispatch({ type: BookDataType.update_page, payload: sections[index + 1].flow.href });
         } else if (event.key === 'ArrowLeft' && index - 1 >= 0) {
-          dispatch({ type: BookDataType.update_page, payload: index - 1 });
+          dispatch({ type: BookDataType.update_page, payload: sections[index - 1].flow.href });
         }
       }}>
-      {sections[index].section}
+      {sections.find(({ flow: { href } }) => page.includes(href))?.section}
     </div>
   );
 };
