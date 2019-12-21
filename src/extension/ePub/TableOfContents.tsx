@@ -66,7 +66,11 @@ export const TableOfContents: React.FC<Props> = () => {
     const { href, title, children } = content;
     if (children.length) {
       return (
-        <SubMenu title={title} key={href} onTitleClick={navigate}>
+        <SubMenu
+          style={{ color: href.includes(page) ? '#1890ff' : '' }}
+          title={title}
+          key={href}
+          onTitleClick={navigate}>
           {children.map(renderContents)}
         </SubMenu>
       );
@@ -75,8 +79,18 @@ export const TableOfContents: React.FC<Props> = () => {
     }
   };
 
+  const getSelectedKey = (page: string) => {
+    const key = book.toc.filter(({ href }) => href.includes(page));
+    if (key.length === 1) {
+      return [key[0].href];
+    }
+    return [page];
+  };
+
+  const selected_key = getSelectedKey(page);
+
   return (
-    <Menu selectedKeys={[page || '']} onClick={navigate} mode="inline">
+    <Menu selectedKeys={selected_key} onClick={navigate} mode="inline">
       {contents.map(renderContents)}
     </Menu>
   );

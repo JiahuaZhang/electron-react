@@ -1,5 +1,5 @@
 export interface BookData {
-  page?: string;
+  page: string;
   pageIndex: number;
 }
 
