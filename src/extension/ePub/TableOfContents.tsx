@@ -45,19 +45,28 @@ const getNestedContents = (contents: TocElement[]): content[] => {
 
 export const TableOfContents: React.FC<Props> = () => {
   const book = React.useContext(BookContext);
-  const { dispatch } = React.useContext(BookDataContext);
+  const {
+    dispatch,
+    state: { page }
+  } = React.useContext(BookDataContext);
   const contents = getNestedContents(filterDuplicateContent(book.toc));
+
+  const navigate = ({ key }: { key: string }) => {
+    const pageIndex = book.flow.findIndex(({ href }) => key.includes(href));
+    dispatch({
+      type: BookDataType.update_page,
+      payload: {
+        page: key,
+        pageIndex
+      }
+    });
+  };
 
   const renderContents = (content: content): JSX.Element => {
     const { href, title, children } = content;
     if (children.length) {
       return (
-        <SubMenu
-          title={title}
-          key={href}
-          onTitleClick={({ key }) => {
-            dispatch({ type: BookDataType.update_page, payload: key });
-          }}>
+        <SubMenu title={title} key={href} onTitleClick={navigate}>
           {children.map(renderContents)}
         </SubMenu>
       );
@@ -67,11 +76,7 @@ export const TableOfContents: React.FC<Props> = () => {
   };
 
   return (
-    <Menu
-      onClick={({ key }) => {
-        dispatch({ type: BookDataType.update_page, payload: key });
-      }}
-      mode="inline">
+    <Menu selectedKeys={[page || '']} onClick={navigate} mode="inline">
       {contents.map(renderContents)}
     </Menu>
   );

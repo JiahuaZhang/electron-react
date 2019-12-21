@@ -1,7 +1,9 @@
 export interface BookData {
-  page: string;
+  page?: string;
+  pageIndex: number;
 }
 
 export const defaultBookData: BookData = {
-  page: ''
+  page: '',
+  pageIndex: 0
 };

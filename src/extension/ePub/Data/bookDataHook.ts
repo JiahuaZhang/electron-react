@@ -13,7 +13,7 @@ export enum BookDataType {
 
 export interface BookDataAction {
   type: BookDataType;
-  payload?: number | string | BookData;
+  payload?: BookData | { page: string; pageIndex: number };
 }
 
 export interface BookDataHook {
@@ -29,7 +29,8 @@ const reducer = (state: BookData, { type, payload }: BookDataAction) => {
     case BookDataType.init_with_default:
       return defaultBookData;
     case BookDataType.update_page:
-      new_state.page = payload as string;
+      new_state.page = payload?.page as string;
+      new_state.pageIndex = payload?.pageIndex as number;
       return new_state;
 
     default:

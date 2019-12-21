@@ -32,30 +32,23 @@ export const Book: React.FC<Props> = () => {
   const [sections, setSections] = useState(initSections(book.flow));
   const bookData = React.useContext(BookDataContext);
   const { state, dispatch } = bookData;
-  const { page } = state;
+  const { page, pageIndex } = state;
 
   const fontFamily = english_font
     ? `${english_font}, ${chinese_font}`
     : default_english_fonts.concat(chinese_font || '').join(',');
 
   useEffect(() => {
-    if (!page) {
-      return dispatch({ type: BookDataType.update_page, payload: sections[0].flow.href });
+    if (!sections[pageIndex]?.section) {
+      setSections(prev => {
+        const next = [...prev];
+        next[pageIndex].section = <Section section={next[pageIndex].flow} />;
+        return next;
+      });
+    } else {
+      console.debug(`section pageIndex: ${pageIndex}, page: ${page}`);
     }
-
-    if (!sections.find(({ flow: { href } }) => page.includes(href))?.section) {
-      setSections(prev =>
-        prev.map(section => {
-          if (page.includes(section.flow.href)) {
-            const newSection = { ...section };
-            newSection.section = <Section section={newSection.flow} />;
-            return newSection;
-          }
-          return section;
-        })
-      );
-    }
-  }, [page, sections]);
+  }, [page, pageIndex, sections, dispatch]);
 
   return (
     <div
@@ -63,14 +56,25 @@ export const Book: React.FC<Props> = () => {
       className="book"
       tabIndex={0}
       onKeyDown={event => {
-        const index = book.flow.findIndex(({ href }) => page.includes(href));
-        if (event.key === 'ArrowRight' && index + 1 < sections.length) {
-          dispatch({ type: BookDataType.update_page, payload: sections[index + 1].flow.href });
-        } else if (event.key === 'ArrowLeft' && index - 1 >= 0) {
-          dispatch({ type: BookDataType.update_page, payload: sections[index - 1].flow.href });
+        if (event.key === 'ArrowRight' && pageIndex + 1 < sections.length) {
+          dispatch({
+            type: BookDataType.update_page,
+            payload: {
+              page: sections[pageIndex + 1].flow.href,
+              pageIndex: pageIndex + 1
+            }
+          });
+        } else if (event.key === 'ArrowLeft' && pageIndex - 1 >= 0) {
+          dispatch({
+            type: BookDataType.update_page,
+            payload: {
+              page: sections[pageIndex - 1].flow.href,
+              pageIndex: pageIndex - 1
+            }
+          });
         }
       }}>
-      {sections.find(({ flow: { href } }) => page.includes(href))?.section}
+      {sections[pageIndex]?.section}
     </div>
   );
 };
