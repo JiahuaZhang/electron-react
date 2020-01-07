@@ -104,8 +104,6 @@ export const Section: React.FC<Props> = ({ section }) => {
     };
 
     wrapperRef.current?.addEventListener('selectstart', onSelectStart);
-
-    return () => wrapperRef.current?.removeEventListener('selectstart', onSelectStart);
   }, []);
 
   return (
