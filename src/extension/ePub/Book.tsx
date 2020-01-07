@@ -52,7 +52,7 @@ export const Book: React.FC<Props> = () => {
 
   return (
     <div
-      style={{ fontSize: fontSize, fontFamily }}
+      style={{ fontSize, fontFamily }}
       className="book"
       tabIndex={0}
       onKeyDown={event => {

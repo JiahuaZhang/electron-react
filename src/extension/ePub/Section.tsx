@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { Affix } from 'antd';
 
 import { manifest, EPub } from './model/book.type';
 import { BookContext } from './bookContext';
 
 const { ipcRenderer } = window.require('electron');
+const default_highlight_colors = ['#ffeb3b', '#ff9800', '#ff5722', '#673ab7', '#03a9f4', '#4caf50'];
 
 interface Props {
   section: manifest;
@@ -25,6 +27,9 @@ const redirectedHref = (book: EPub, href: string): Promise<string> =>
 export const Section: React.FC<Props> = ({ section }) => {
   const [html, setHtml] = useState(<></>);
   const book = useContext(BookContext);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [selectPanel, setSelectPanel] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     if (!book) {
@@ -64,5 +69,79 @@ export const Section: React.FC<Props> = ({ section }) => {
     });
   }, [section, book]);
 
-  return html;
+  useEffect(() => {
+    const onSelectStart = (event: Event) => {
+      wrapperRef.current?.addEventListener(
+        'mouseup',
+        event => {
+          const rect = wrapperRef.current?.getBoundingClientRect();
+          if (
+            rect &&
+            panelRef.current &&
+            wrapperRef.current &&
+            wrapperRef.current.parentElement?.parentElement
+          ) {
+            const left =
+              event.offsetX + panelRef.current.clientWidth > rect.width
+                ? rect.width - panelRef.current.clientWidth
+                : event.offsetX;
+
+            const top =
+              event.y + panelRef.current.clientHeight > window.innerHeight
+                ? wrapperRef.current.parentElement.parentElement.scrollTop +
+                  event.y -
+                  wrapperRef.current.offsetTop -
+                  panelRef.current.clientHeight
+                : wrapperRef.current.parentElement.parentElement.scrollTop +
+                  event.y -
+                  wrapperRef.current.offsetTop;
+
+            setSelectPanel({ left, top });
+          }
+        },
+        { once: true }
+      );
+    };
+
+    wrapperRef.current?.addEventListener('selectstart', onSelectStart);
+
+    return () => wrapperRef.current?.removeEventListener('selectstart', onSelectStart);
+  }, []);
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative' }}>
+      <Affix style={{ position: 'absolute', top: selectPanel.top, left: selectPanel.left }}>
+        <div
+          ref={panelRef}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(20px, 1fr))',
+            position: 'relative',
+            minWidth: 200,
+            gap: 5,
+            padding: 5,
+            border: '1px solid #1890ff5c',
+            borderRadius: 7,
+            background: 'linear-gradient(to right, #e0eafc, #cfdef3)'
+          }}>
+          {default_highlight_colors.map(color => (
+            <span
+              onClick={() => {
+                // console.log(color); todo
+              }}
+              key={color}
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                backgroundColor: color,
+                display: 'inline-block',
+                cursor: 'pointer'
+              }}></span>
+          ))}
+        </div>
+      </Affix>
+      {html}
+    </div>
+  );
 };

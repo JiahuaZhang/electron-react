@@ -19,7 +19,8 @@ if (process.env.NODE_ENV !== 'production') {
       /TableOfContents/,
       /ConfigPanel/,
       /FontFamily/,
-      /FontSizeConfig/
+      /FontSizeConfig/,
+      /App/
     ]
   });
 }
@@ -59,6 +60,11 @@ const App: React.FC = () => {
     setState([
       { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(getController)]} /> }
     ]);
+    ePub(getController).processor(
+      '/Users/jzhang016/Documents/Books/模仿的技术：企业如何从“山寨”到创新-井上达彦.epub'
+      // '/Users/jzhang016/Documents/Books/创新者的方法-内森•弗尔 & 杰夫·戴尔.epub'
+      // '/Users/jzhang016/Documents/Books/阿里铁军销售课-李立恒.epub'
+    );
   }, []);
 
   const renderedContent = () => {
