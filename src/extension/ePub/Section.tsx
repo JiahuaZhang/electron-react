@@ -30,6 +30,7 @@ export const Section: React.FC<Props> = ({ section }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [selectPanel, setSelectPanel] = useState({ top: 0, left: 0 });
+  const [showPanel, setShowPanel] = useState(false);
 
   useEffect(() => {
     if (!book) {
@@ -74,6 +75,10 @@ export const Section: React.FC<Props> = ({ section }) => {
       wrapperRef.current?.addEventListener(
         'mouseup',
         event => {
+          const selection = document.getSelection();
+          if (!selection?.toString()) {
+            return;
+          }
           const rect = wrapperRef.current?.getBoundingClientRect();
           if (
             rect &&
@@ -97,6 +102,7 @@ export const Section: React.FC<Props> = ({ section }) => {
                   wrapperRef.current.offsetTop;
 
             setSelectPanel({ left, top });
+            setShowPanel(true);
           }
         },
         { once: true }
@@ -106,9 +112,32 @@ export const Section: React.FC<Props> = ({ section }) => {
     wrapperRef.current?.addEventListener('selectstart', onSelectStart);
   }, []);
 
+  useEffect(() => {
+    wrapperRef.current?.addEventListener(
+      'click',
+      event => {
+        if (!showPanel) {
+          return;
+        }
+
+        const target = event.target as HTMLDivElement;
+        if (target.parentElement !== panelRef.current && !document.getSelection()?.toString()) {
+          setShowPanel(false);
+        }
+      },
+      { once: true }
+    );
+  }, [showPanel, setShowPanel]);
+
   return (
     <div ref={wrapperRef} style={{ position: 'relative' }}>
-      <Affix style={{ position: 'absolute', top: selectPanel.top, left: selectPanel.left }}>
+      <Affix
+        style={{
+          position: 'absolute',
+          top: selectPanel.top,
+          left: selectPanel.left,
+          visibility: showPanel ? 'visible' : 'hidden'
+        }}>
         <div
           ref={panelRef}
           style={{
@@ -124,8 +153,9 @@ export const Section: React.FC<Props> = ({ section }) => {
           }}>
           {default_highlight_colors.map(color => (
             <span
-              onClick={() => {
+              onClick={event => {
                 // console.log(color); todo
+                setShowPanel(false);
               }}
               key={color}
               style={{
