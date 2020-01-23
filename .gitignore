@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+/node_modules/*
 /.pnp
 .pnp.js
 
@@ -31,3 +31,10 @@ public/assets/*
 
 # generated config
 public/data/*
+
+# hack -- prevent infinit reload for changing public folder
+!node_modules/react-scripts
+node_modules/react-scripts/*
+!node_modules/react-scripts/config
+node_modules/react-scripts/config/*
+!node_modules/react-scripts/config/webpackDevServer.config.js
