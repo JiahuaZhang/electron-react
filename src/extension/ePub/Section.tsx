@@ -11,6 +11,67 @@ interface Props {
   section: manifest;
 }
 
+interface HighlightSection {
+  path_to_start_container: number[];
+  start_offset: number;
+  path_to_end_container: number[];
+  end_offset: number;
+  color?: string;
+}
+
+const getAdjustedElementPath = (
+  parent: Element,
+  child: Element,
+  offset: number
+): [number[], number] => {
+  if (parent.childElementCount === 0) {
+    return [[], offset];
+  }
+
+  if (parent.firstElementChild?.tagName === 'SPAN') {
+    let adjusted_offset = 0;
+    for (const current of Array.from(parent.children)) {
+      if (current.contains(child)) {
+        return [[], adjusted_offset + offset];
+      } else {
+        adjusted_offset += current.textContent?.length ?? 0;
+      }
+    }
+  }
+
+  for (const index in Array.from(parent.children)) {
+    const current = parent.children[index];
+    if (current.contains(child)) {
+      const [path, adjusted_offset] = getAdjustedElementPath(current, child, offset);
+      return [[Number(index), ...path], adjusted_offset];
+    }
+  }
+
+  console.error(parent, child, offset);
+  throw Error('Unreachable case!');
+};
+
+const getAdjustedNode = (parent: Element, path: number[], offset: number): [Node, number] => {
+  const current = path.reduce((node, index) => node.children[index], parent);
+
+  if (current.childElementCount > 0) {
+    let adjusted_offset = offset;
+    for (const index in Array.from(current.children)) {
+      const current_child = current.children[index];
+      const length = (current_child.textContent as string).length;
+      if (length >= adjusted_offset) {
+        return [current_child.childNodes[0], adjusted_offset];
+      } else {
+        adjusted_offset -= length;
+      }
+    }
+    console.error(parent, path, offset);
+    throw Error('Unreachable case.');
+  }
+
+  return [current.childNodes[0], offset];
+};
+
 const redirectedHref = (book: EPub, href: string): Promise<string> =>
   new Promise<string>(res => {
     const fileName = href.split('/').pop() || '';
@@ -31,6 +92,7 @@ export const Section: React.FC<Props> = ({ section }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const [selectPanel, setSelectPanel] = useState({ top: 0, left: 0 });
   const [showPanel, setShowPanel] = useState(false);
+  const [highlight, setHighlight] = useState({} as HighlightSection);
 
   useEffect(() => {
     if (!book) {
@@ -76,9 +138,33 @@ export const Section: React.FC<Props> = ({ section }) => {
         'mouseup',
         event => {
           const selection = document.getSelection();
-          if (!selection?.toString()) {
+          if (!selection?.toString().trim()) {
             return;
           }
+
+          const range = selection.getRangeAt(0);
+          const highlightSection = {} as HighlightSection;
+
+          const section_ref = (wrapperRef.current as HTMLDivElement).children[1];
+
+          let [path, adjusted_offset] = getAdjustedElementPath(
+            section_ref,
+            range.startContainer as Element,
+            range.startOffset
+          );
+          highlightSection.path_to_start_container = path;
+          highlightSection.start_offset = adjusted_offset;
+
+          [path, adjusted_offset] = getAdjustedElementPath(
+            section_ref,
+            range.endContainer as Element,
+            range.endOffset
+          );
+          highlightSection.path_to_end_container = path;
+          highlightSection.end_offset = adjusted_offset;
+
+          setHighlight(highlightSection);
+
           const rect = wrapperRef.current?.getBoundingClientRect();
           if (
             rect &&
@@ -113,24 +199,54 @@ export const Section: React.FC<Props> = ({ section }) => {
   }, []);
 
   useEffect(() => {
-    wrapperRef.current?.addEventListener(
-      'click',
-      event => {
-        if (!showPanel) {
-          return;
-        }
+    if (!highlight || !highlight.color) return;
 
-        const target = event.target as HTMLDivElement;
-        if (target.parentElement !== panelRef.current && !document.getSelection()?.toString()) {
-          setShowPanel(false);
-        }
-      },
-      { once: true }
+    const selection = document.getSelection();
+    if (!selection) return;
+
+    const section_ref = wrapperRef.current?.children[1];
+    if (!section_ref) return;
+
+    selection.removeAllRanges();
+    const [start_container, start_offset] = getAdjustedNode(
+      section_ref,
+      highlight.path_to_start_container,
+      highlight.start_offset
     );
-  }, [showPanel, setShowPanel]);
+    const [end_container, end_offset] = getAdjustedNode(
+      section_ref,
+      highlight.path_to_end_container,
+      highlight.end_offset
+    );
+
+    const range = document.createRange();
+    range.setStart(start_container, start_offset);
+    range.setEnd(end_container, end_offset);
+
+    selection.addRange(range);
+
+    document.designMode = 'on';
+    document.execCommand('backColor', false, highlight.color);
+    document.designMode = 'off';
+  }, [highlight]);
+
+  const closeShowPanel = (event: React.MouseEvent) => {
+    if (!showPanel) {
+      return;
+    }
+
+    const target = event.target as HTMLDivElement;
+    if (target.parentElement === panelRef.current) {
+      return;
+    }
+
+    if (!document.getSelection()?.toString()) {
+      setShowPanel(false);
+    }
+  };
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative' }}>
+    <div ref={wrapperRef} style={{ position: 'relative' }} onClick={closeShowPanel}>
       <Affix
         style={{
           position: 'absolute',
@@ -154,8 +270,11 @@ export const Section: React.FC<Props> = ({ section }) => {
           {default_highlight_colors.map(color => (
             <span
               onClick={event => {
-                // console.log(color); todo
+                setHighlight(highlight => ({ ...highlight, color }));
                 setShowPanel(false);
+                setTimeout(() => {
+                  document.getSelection()?.removeAllRanges();
+                }, 0);
               }}
               key={color}
               style={{

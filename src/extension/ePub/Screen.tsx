@@ -108,7 +108,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
           )}
         </Menu>
       </Header>
-      <Layout style={{ overflow: 'hidden' }}>
+      <Layout style={{ overflow: 'hidden', backgroundColor: 'white' }}>
         <Sider width={showPanel ? siderWidth : 0} style={{ overflow: 'auto' }} theme="light">
           <div ref={sider}>{getCurrentPanel()}</div>
         </Sider>
