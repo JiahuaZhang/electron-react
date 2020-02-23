@@ -19,57 +19,54 @@ interface HighlightSection {
   color?: string;
 }
 
-const getAdjustedElementPath = (
-  parent: Element,
-  child: Element,
-  offset: number
-): [number[], number] => {
-  if (parent.childElementCount === 0) {
-    return [[], offset];
-  }
+const getAdjustedNodePath = (parent: Node, child: Node, offset: number): [number[], number] => {
+  if (parent.firstChild?.nodeName === 'SPAN') {
+    let current_node = parent.firstChild;
 
-  if (parent.firstElementChild?.tagName === 'SPAN') {
-    let adjusted_offset = 0;
-    for (const current of Array.from(parent.children)) {
-      if (current.contains(child)) {
-        return [[], adjusted_offset + offset];
+    while (!current_node.isEqualNode(child)) {
+      if (current_node.contains(child)) {
+        current_node = current_node.childNodes[0];
       } else {
-        adjusted_offset += current.textContent?.length ?? 0;
+        offset += current_node.textContent?.length as number;
+        current_node = current_node.nextSibling as ChildNode;
       }
     }
+
+    return [[0], offset];
   }
 
-  for (const index in Array.from(parent.children)) {
-    const current = parent.children[index];
+  for (const index in Array.from(parent.childNodes)) {
+    const current = parent.childNodes[index];
+    if (current.isEqualNode(child)) {
+      return [[Number(index)], offset];
+    }
+
     if (current.contains(child)) {
-      const [path, adjusted_offset] = getAdjustedElementPath(current, child, offset);
+      const [path, adjusted_offset] = getAdjustedNodePath(current, child, offset);
       return [[Number(index), ...path], adjusted_offset];
     }
   }
 
   console.error(parent, child, offset);
-  throw Error('Unreachable case!');
+  throw Error('Unreachable case for getAdjustedNodePath!');
 };
 
-const getAdjustedNode = (parent: Element, path: number[], offset: number): [Node, number] => {
-  const current = path.reduce((node, index) => node.children[index], parent);
+const getAdjustedNode = (parent: Node, path: number[], offset: number): [Node, number] => {
+  let current = path.reduce((node, index) => node.childNodes[index], parent);
 
-  if (current.childElementCount > 0) {
-    let adjusted_offset = offset;
-    for (const index in Array.from(current.children)) {
-      const current_child = current.children[index];
-      const length = (current_child.textContent as string).length;
-      if (length >= adjusted_offset) {
-        return [current_child.childNodes[0], adjusted_offset];
+  if (current.nodeName === 'SPAN') {
+    while (current.hasChildNodes() || offset > (current.textContent?.length as number)) {
+      if (offset <= (current.textContent?.length as number)) {
+        current = current.firstChild as Node;
       } else {
-        adjusted_offset -= length;
+        offset -= current.textContent?.length as number;
+        current = current.nextSibling as Node;
       }
     }
-    console.error(parent, path, offset);
-    throw Error('Unreachable case.');
+    return [current, offset];
   }
 
-  return [current.childNodes[0], offset];
+  return [current, offset];
 };
 
 const redirectedHref = (book: EPub, href: string): Promise<string> =>
@@ -145,19 +142,19 @@ export const Section: React.FC<Props> = ({ section }) => {
           const range = selection.getRangeAt(0);
           const highlightSection = {} as HighlightSection;
 
-          const section_ref = (wrapperRef.current as HTMLDivElement).children[1];
+          const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
 
-          let [path, adjusted_offset] = getAdjustedElementPath(
+          let [path, adjusted_offset] = getAdjustedNodePath(
             section_ref,
-            range.startContainer as Element,
+            range.startContainer,
             range.startOffset
           );
           highlightSection.path_to_start_container = path;
           highlightSection.start_offset = adjusted_offset;
 
-          [path, adjusted_offset] = getAdjustedElementPath(
+          [path, adjusted_offset] = getAdjustedNodePath(
             section_ref,
-            range.endContainer as Element,
+            range.endContainer,
             range.endOffset
           );
           highlightSection.path_to_end_container = path;
