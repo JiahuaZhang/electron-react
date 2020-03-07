@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Affix } from 'antd';
+import { Affix, Icon } from 'antd';
 
 import { manifest, EPub } from './model/book.type';
 import { BookContext } from './bookContext';
+import {
+  getAdjustedNodePath,
+  highlightSelection,
+  HighlightSection,
+  getAdjustedNode,
+  isSameRange
+} from './utils/highlight';
 
 const { ipcRenderer } = window.require('electron');
 const default_highlight_colors = ['#ffeb3b', '#ff9800', '#ff5722', '#673ab7', '#03a9f4', '#4caf50'];
@@ -11,63 +18,9 @@ interface Props {
   section: manifest;
 }
 
-interface HighlightSection {
-  path_to_start_container: number[];
-  start_offset: number;
-  path_to_end_container: number[];
-  end_offset: number;
-  color?: string;
+interface HighlighAction extends HighlightSection {
+  status?: 'add' | 'update' | 'delete';
 }
-
-const getAdjustedNodePath = (parent: Node, child: Node, offset: number): [number[], number] => {
-  if (parent.firstChild?.nodeName === 'SPAN') {
-    let current_node = parent.firstChild;
-
-    while (!current_node.isEqualNode(child)) {
-      if (current_node.contains(child)) {
-        current_node = current_node.childNodes[0];
-      } else {
-        offset += current_node.textContent?.length as number;
-        current_node = current_node.nextSibling as ChildNode;
-      }
-    }
-
-    return [[0], offset];
-  }
-
-  for (const index in Array.from(parent.childNodes)) {
-    const current = parent.childNodes[index];
-    if (current.isEqualNode(child)) {
-      return [[Number(index)], offset];
-    }
-
-    if (current.contains(child)) {
-      const [path, adjusted_offset] = getAdjustedNodePath(current, child, offset);
-      return [[Number(index), ...path], adjusted_offset];
-    }
-  }
-
-  console.error(parent, child, offset);
-  throw Error('Unreachable case for getAdjustedNodePath!');
-};
-
-const getAdjustedNode = (parent: Node, path: number[], offset: number): [Node, number] => {
-  let current = path.reduce((node, index) => node.childNodes[index], parent);
-
-  if (current.nodeName === 'SPAN') {
-    while (current.hasChildNodes() || offset > (current.textContent?.length as number)) {
-      if (offset <= (current.textContent?.length as number)) {
-        current = current.firstChild as Node;
-      } else {
-        offset -= current.textContent?.length as number;
-        current = current.nextSibling as Node;
-      }
-    }
-    return [current, offset];
-  }
-
-  return [current, offset];
-};
 
 const redirectedHref = (book: EPub, href: string): Promise<string> =>
   new Promise<string>(res => {
@@ -82,14 +35,37 @@ const redirectedHref = (book: EPub, href: string): Promise<string> =>
     );
   });
 
+const getAbsolutePanelPosistion = (
+  parent: HTMLElement,
+  panel: HTMLElement,
+  event: MouseEvent,
+  window: Window
+) => {
+  const rect = parent.getBoundingClientRect();
+  const left =
+    event.offsetX + panel.clientWidth > rect.width ? rect.width - panel.clientWidth : event.offsetX;
+  const top =
+    event.y + panel.clientHeight > window.innerHeight
+      ? (parent.parentElement?.parentElement?.scrollTop as number) +
+        event.y -
+        parent.offsetTop -
+        panel.clientHeight
+      : (parent.parentElement?.parentElement?.scrollTop as number) + event.y - parent.offsetTop;
+
+  return { left, top };
+};
+
 export const Section: React.FC<Props> = ({ section }) => {
+  const [originalHtml, setOriginalHtml] = useState('');
   const [html, setHtml] = useState(<></>);
   const book = useContext(BookContext);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [selectPanel, setSelectPanel] = useState({ top: 0, left: 0 });
+  const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0 });
   const [showPanel, setShowPanel] = useState(false);
-  const [highlight, setHighlight] = useState({} as HighlightSection);
+  const [highlights, setHighlights] = useState<HighlightSection[]>([]);
+  const [recentHighlight, setRecentHighlight] = useState({} as HighlighAction);
+  const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
     if (!book) {
@@ -125,6 +101,7 @@ export const Section: React.FC<Props> = ({ section }) => {
         text = text.replace(attributes[0], `href="${href}"`);
       }
 
+      setOriginalHtml(text);
       setHtml(<div dangerouslySetInnerHTML={{ __html: text }}></div>);
     });
   }, [section, book]);
@@ -140,53 +117,37 @@ export const Section: React.FC<Props> = ({ section }) => {
           }
 
           const range = selection.getRangeAt(0);
-          const highlightSection = {} as HighlightSection;
-
           const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
+          const highlightAction = {} as HighlighAction;
 
+          highlightAction.status = 'add';
           let [path, adjusted_offset] = getAdjustedNodePath(
             section_ref,
             range.startContainer,
             range.startOffset
           );
-          highlightSection.path_to_start_container = path;
-          highlightSection.start_offset = adjusted_offset;
+          highlightAction.path_to_start_container = path;
+          highlightAction.start_offset = adjusted_offset;
 
           [path, adjusted_offset] = getAdjustedNodePath(
             section_ref,
             range.endContainer,
             range.endOffset
           );
-          highlightSection.path_to_end_container = path;
-          highlightSection.end_offset = adjusted_offset;
+          highlightAction.path_to_end_container = path;
+          highlightAction.end_offset = adjusted_offset;
 
-          setHighlight(highlightSection);
+          setRecentHighlight(highlightAction);
 
-          const rect = wrapperRef.current?.getBoundingClientRect();
-          if (
-            rect &&
-            panelRef.current &&
-            wrapperRef.current &&
-            wrapperRef.current.parentElement?.parentElement
-          ) {
-            const left =
-              event.offsetX + panelRef.current.clientWidth > rect.width
-                ? rect.width - panelRef.current.clientWidth
-                : event.offsetX;
-
-            const top =
-              event.y + panelRef.current.clientHeight > window.innerHeight
-                ? wrapperRef.current.parentElement.parentElement.scrollTop +
-                  event.y -
-                  wrapperRef.current.offsetTop -
-                  panelRef.current.clientHeight
-                : wrapperRef.current.parentElement.parentElement.scrollTop +
-                  event.y -
-                  wrapperRef.current.offsetTop;
-
-            setSelectPanel({ left, top });
-            setShowPanel(true);
-          }
+          setPanelPosition(
+            getAbsolutePanelPosistion(
+              wrapperRef.current as HTMLDivElement,
+              panelRef.current as HTMLDivElement,
+              event,
+              window
+            )
+          );
+          setShowPanel(true);
         },
         { once: true }
       );
@@ -196,36 +157,57 @@ export const Section: React.FC<Props> = ({ section }) => {
   }, []);
 
   useEffect(() => {
-    if (!highlight || !highlight.color) return;
-
-    const selection = document.getSelection();
-    if (!selection) return;
-
     const section_ref = wrapperRef.current?.children[1];
     if (!section_ref) return;
 
-    selection.removeAllRanges();
-    const [start_container, start_offset] = getAdjustedNode(
-      section_ref,
-      highlight.path_to_start_container,
-      highlight.start_offset
-    );
-    const [end_container, end_offset] = getAdjustedNode(
-      section_ref,
-      highlight.path_to_end_container,
-      highlight.end_offset
-    );
+    switch (recentHighlight?.status) {
+      case 'add':
+        highlightSelection(document, recentHighlight, section_ref);
+        setHighlights(values => [...values, recentHighlight]);
+        break;
+      case 'update':
+        highlightSelection(document, recentHighlight, section_ref);
+        setHighlights(values =>
+          values.map(value => {
+            if (isSameRange(value, recentHighlight)) {
+              return { ...recentHighlight };
+            } else {
+              return { ...value };
+            }
+          })
+        );
+        break;
 
-    const range = document.createRange();
-    range.setStart(start_container, start_offset);
-    range.setEnd(end_container, end_offset);
+      case 'delete':
+        setHighlights(values =>
+          values.reduce<HighlightSection[]>((accumulator, current) => {
+            if (isSameRange(current, recentHighlight)) {
+              return [{ ...current, color: 'white' }, ...accumulator];
+            }
+            return [...accumulator, current];
+          }, [])
+        );
+        setRefresh(true);
+        break;
 
-    selection.addRange(range);
+      default:
+        break;
+    }
+  }, [recentHighlight, originalHtml]);
 
-    document.designMode = 'on';
-    document.execCommand('backColor', false, highlight.color);
-    document.designMode = 'off';
-  }, [highlight]);
+  useEffect(() => {
+    if (refresh) {
+      setHtml(<div dangerouslySetInnerHTML={{ __html: originalHtml }}></div>);
+      const section_ref = wrapperRef.current?.children[1];
+      if (!section_ref) return;
+      for (const h of highlights) {
+        highlightSelection(document, h, section_ref);
+      }
+      document.getSelection()?.removeAllRanges();
+      setHighlights(values => values.filter(highlight => highlight.color !== 'white'));
+    }
+    setRefresh(false);
+  }, [refresh, originalHtml, highlights]);
 
   const closeShowPanel = (event: React.MouseEvent) => {
     if (!showPanel) {
@@ -242,13 +224,59 @@ export const Section: React.FC<Props> = ({ section }) => {
     }
   };
 
+  const clickHighlight = (event: React.MouseEvent) => {
+    const target = event.target as Node;
+    const section_ref = wrapperRef.current?.children[1];
+
+    if (target.nodeName !== 'SPAN' || target === section_ref || !section_ref) {
+      return;
+    }
+
+    for (const highlight of highlights.reverse()) {
+      const [start_container, start_offset] = getAdjustedNode(
+        section_ref,
+        highlight.path_to_start_container,
+        highlight.start_offset
+      );
+      const [end_container, end_offset] = getAdjustedNode(
+        section_ref,
+        highlight.path_to_end_container,
+        highlight.end_offset
+      );
+
+      const range = document.createRange();
+      range.setStart(start_container, start_offset);
+      range.setEnd(end_container, end_offset);
+
+      if (range.intersectsNode(target)) {
+        setPanelPosition(
+          getAbsolutePanelPosistion(
+            wrapperRef.current as HTMLDivElement,
+            panelRef.current as HTMLDivElement,
+            event.nativeEvent,
+            window
+          )
+        );
+        setShowPanel(true);
+        setRecentHighlight(highlight);
+        break;
+      }
+    }
+  };
+
   return (
-    <div ref={wrapperRef} style={{ position: 'relative' }} onClick={closeShowPanel}>
+    <div
+      ref={wrapperRef}
+      style={{ position: 'relative' }}
+      onClick={event => {
+        closeShowPanel(event);
+        clickHighlight(event);
+      }}>
       <Affix
         style={{
           position: 'absolute',
-          top: selectPanel.top,
-          left: selectPanel.left,
+          top: panelPosition.top,
+          left: panelPosition.left,
           visibility: showPanel ? 'visible' : 'hidden'
         }}>
         <div
@@ -262,12 +290,17 @@ export const Section: React.FC<Props> = ({ section }) => {
             padding: 5,
             border: '1px solid #1890ff5c',
             borderRadius: 7,
-            background: 'linear-gradient(to right, #e0eafc, #cfdef3)'
+            background: 'linear-gradient(to right, #e0eafc, #cfdef3)',
+            alignItems: 'center'
           }}>
           {default_highlight_colors.map(color => (
             <span
               onClick={event => {
-                setHighlight(highlight => ({ ...highlight, color }));
+                if (recentHighlight?.status === 'add') {
+                  setRecentHighlight(highlight => ({ ...highlight, color }));
+                } else {
+                  setRecentHighlight(highlight => ({ ...highlight, color, status: 'update' }));
+                }
                 setShowPanel(false);
                 setTimeout(() => {
                   document.getSelection()?.removeAllRanges();
@@ -283,6 +316,19 @@ export const Section: React.FC<Props> = ({ section }) => {
                 cursor: 'pointer'
               }}></span>
           ))}
+          <Icon
+            type="close"
+            style={{ width: 18, cursor: 'pointer' }}
+            onClick={() => setShowPanel(false)}
+          />
+          <Icon
+            type="delete"
+            style={{ width: 18, cursor: 'pointer' }}
+            onClick={() => {
+              setShowPanel(false);
+              setRecentHighlight(highlight => ({ ...highlight, status: 'delete' }));
+            }}
+          />
         </div>
       </Affix>
       {html}
