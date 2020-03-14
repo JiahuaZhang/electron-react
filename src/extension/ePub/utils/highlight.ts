@@ -60,6 +60,20 @@ export const getAdjustedNode = (parent: Node, path: number[], offset: number): [
   return [current, offset];
 };
 
+export const generateHighlight = (range: Range, node: Node) => {
+  const highlightSection = {} as HighlightSection;
+
+  let [path, adjusted_offset] = getAdjustedNodePath(node, range.startContainer, range.startOffset);
+  highlightSection.path_to_start_container = path;
+  highlightSection.start_offset = adjusted_offset;
+
+  [path, adjusted_offset] = getAdjustedNodePath(node, range.endContainer, range.endOffset);
+  highlightSection.path_to_end_container = path;
+  highlightSection.end_offset = adjusted_offset;
+
+  return highlightSection;
+};
+
 export const highlightSelection = (
   document: Document,
   highlight: HighlightSection,
@@ -100,4 +114,49 @@ export const isSameRange = (range1: HighlightSection, range2: HighlightSection) 
     range1.path_to_start_container.join('') === range2.path_to_start_container.join('') &&
     range1.path_to_end_container.join('') === range2.path_to_end_container.join('')
   );
+};
+
+export const isClickInside = (parent: Node, target: Node, highlight: HighlightSection) => {
+  const [path, offset] = getAdjustedNodePath(parent, target, 0);
+  if (path.join(',') === highlight.path_to_start_container.join(',')) {
+    if (offset === highlight.start_offset) {
+      return true;
+    } else if (offset < highlight.start_offset) {
+      return false;
+    }
+  }
+
+  if (path.join(',') === highlight.path_to_end_container.join(',')) {
+    if (offset < highlight.end_offset) {
+      return true;
+    } else if (offset >= highlight.end_offset) {
+      return false;
+    }
+  }
+
+  let is_after_start = false;
+  for (let i = 0; i < path.length; ++i) {
+    if (path[i] > highlight.path_to_start_container[i]) {
+      is_after_start = true;
+      break;
+    } else if (path[i] < highlight.path_to_start_container[i]) {
+      break;
+    }
+  }
+
+  if (!is_after_start) {
+    return false;
+  }
+
+  let is_before_end = false;
+  for (let i = 0; i < path.length; ++i) {
+    if (path[i] < highlight.path_to_end_container[i]) {
+      is_before_end = true;
+      break;
+    } else if (path[i] > highlight.path_to_end_container[i]) {
+      break;
+    }
+  }
+
+  return is_before_end;
 };

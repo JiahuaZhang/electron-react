@@ -4,11 +4,11 @@ import { Affix, Icon } from 'antd';
 import { manifest, EPub } from './model/book.type';
 import { BookContext } from './bookContext';
 import {
-  getAdjustedNodePath,
   highlightSelection,
   HighlightSection,
-  getAdjustedNode,
-  isSameRange
+  isSameRange,
+  generateHighlight,
+  isClickInside
 } from './utils/highlight';
 
 const { ipcRenderer } = window.require('electron');
@@ -118,25 +118,9 @@ export const Section: React.FC<Props> = ({ section }) => {
 
           const range = selection.getRangeAt(0);
           const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
-          const highlightAction = {} as HighlighAction;
+          const highlightAction = generateHighlight(range, section_ref) as HighlighAction;
 
           highlightAction.status = 'add';
-          let [path, adjusted_offset] = getAdjustedNodePath(
-            section_ref,
-            range.startContainer,
-            range.startOffset
-          );
-          highlightAction.path_to_start_container = path;
-          highlightAction.start_offset = adjusted_offset;
-
-          [path, adjusted_offset] = getAdjustedNodePath(
-            section_ref,
-            range.endContainer,
-            range.endOffset
-          );
-          highlightAction.path_to_end_container = path;
-          highlightAction.end_offset = adjusted_offset;
-
           setRecentHighlight(highlightAction);
 
           setPanelPosition(
@@ -148,6 +132,7 @@ export const Section: React.FC<Props> = ({ section }) => {
             )
           );
           setShowPanel(true);
+          event.stopImmediatePropagation();
         },
         { once: true }
       );
@@ -157,6 +142,10 @@ export const Section: React.FC<Props> = ({ section }) => {
   }, []);
 
   useEffect(() => {
+    if (!recentHighlight.color) {
+      return;
+    }
+
     const section_ref = wrapperRef.current?.children[1];
     if (!section_ref) return;
 
@@ -165,17 +154,13 @@ export const Section: React.FC<Props> = ({ section }) => {
         highlightSelection(document, recentHighlight, section_ref);
         setHighlights(values => [...values, recentHighlight]);
         break;
+
       case 'update':
         highlightSelection(document, recentHighlight, section_ref);
-        setHighlights(values =>
-          values.map(value => {
-            if (isSameRange(value, recentHighlight)) {
-              return { ...recentHighlight };
-            } else {
-              return { ...value };
-            }
-          })
-        );
+        setHighlights(values => {
+          values = values.filter(value => !isSameRange(value, recentHighlight));
+          return [...values, recentHighlight];
+        });
         break;
 
       case 'delete':
@@ -228,27 +213,17 @@ export const Section: React.FC<Props> = ({ section }) => {
     const target = event.target as Node;
     const section_ref = wrapperRef.current?.children[1];
 
-    if (target.nodeName !== 'SPAN' || target === section_ref || !section_ref) {
+    if (
+      target.nodeName !== 'SPAN' ||
+      target === section_ref ||
+      panelRef.current?.contains(target) ||
+      !section_ref
+    ) {
       return;
     }
 
     for (const highlight of highlights.reverse()) {
-      const [start_container, start_offset] = getAdjustedNode(
-        section_ref,
-        highlight.path_to_start_container,
-        highlight.start_offset
-      );
-      const [end_container, end_offset] = getAdjustedNode(
-        section_ref,
-        highlight.path_to_end_container,
-        highlight.end_offset
-      );
-
-      const range = document.createRange();
-      range.setStart(start_container, start_offset);
-      range.setEnd(end_container, end_offset);
-
-      if (range.intersectsNode(target)) {
+      if (isClickInside(section_ref, target, highlight)) {
         setPanelPosition(
           getAbsolutePanelPosistion(
             wrapperRef.current as HTMLDivElement,
@@ -258,8 +233,8 @@ export const Section: React.FC<Props> = ({ section }) => {
           )
         );
         setShowPanel(true);
-        setRecentHighlight(highlight);
-        break;
+        setRecentHighlight({ ...highlight, status: 'update' });
+        return;
       }
     }
   };
@@ -296,11 +271,7 @@ export const Section: React.FC<Props> = ({ section }) => {
           {default_highlight_colors.map(color => (
             <span
               onClick={event => {
-                if (recentHighlight?.status === 'add') {
-                  setRecentHighlight(highlight => ({ ...highlight, color }));
-                } else {
-                  setRecentHighlight(highlight => ({ ...highlight, color, status: 'update' }));
-                }
+                setRecentHighlight(highlight => ({ ...highlight, color }));
                 setShowPanel(false);
                 setTimeout(() => {
                   document.getSelection()?.removeAllRanges();
@@ -316,19 +287,22 @@ export const Section: React.FC<Props> = ({ section }) => {
                 cursor: 'pointer'
               }}></span>
           ))}
-          <Icon
-            type="close"
-            style={{ width: 18, cursor: 'pointer' }}
-            onClick={() => setShowPanel(false)}
-          />
-          <Icon
-            type="delete"
-            style={{ width: 18, cursor: 'pointer' }}
-            onClick={() => {
-              setShowPanel(false);
-              setRecentHighlight(highlight => ({ ...highlight, status: 'delete' }));
-            }}
-          />
+          {recentHighlight.status === 'add' ? (
+            <Icon
+              type="close"
+              style={{ width: 18, cursor: 'pointer' }}
+              onClick={() => setShowPanel(false)}
+            />
+          ) : (
+            <Icon
+              type="delete"
+              style={{ width: 18, cursor: 'pointer' }}
+              onClick={() => {
+                setShowPanel(false);
+                setRecentHighlight(highlight => ({ ...highlight, status: 'delete' }));
+              }}
+            />
+          )}
         </div>
       </Affix>
       {html}
