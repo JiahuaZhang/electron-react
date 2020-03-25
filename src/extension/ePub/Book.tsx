@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import './Book.sass';
 import { Section } from './Section';
 import { BookContext } from './bookContext';
-import { manifest } from './model/book.type';
 import { ConfigContext } from './Configuration/configContext';
 import { BookDataType } from './Data/bookDataHook';
 import { BookDataContext } from './Data/bookDataContext';
@@ -23,32 +22,16 @@ const default_english_fonts = [
   'Segoe UI Symbol'
 ];
 
-const initSections = (flows: manifest[]): { flow: manifest; section?: JSX.Element }[] =>
-  flows.map(flow => ({ flow }));
-
 export const Book: React.FC<Props> = () => {
   const book = React.useContext(BookContext);
   const { fontSize, chinese_font, english_font } = React.useContext(ConfigContext);
-  const [sections, setSections] = useState(initSections(book.flow));
   const bookData = React.useContext(BookDataContext);
   const { state, dispatch } = bookData;
-  const { page, pageIndex } = state;
+  const { pageIndex } = state;
 
   const fontFamily = english_font
     ? `${english_font}, ${chinese_font}`
     : default_english_fonts.concat(chinese_font || '').join(',');
-
-  useEffect(() => {
-    if (!sections[pageIndex]?.section) {
-      setSections(prev => {
-        const next = [...prev];
-        next[pageIndex].section = <Section section={next[pageIndex].flow} />;
-        return next;
-      });
-    } else {
-      console.debug(`section pageIndex: ${pageIndex}, page: ${page}`);
-    }
-  }, [page, pageIndex, sections, dispatch]);
 
   return (
     <div
@@ -56,11 +39,11 @@ export const Book: React.FC<Props> = () => {
       className="book"
       tabIndex={0}
       onKeyDown={event => {
-        if (event.key === 'ArrowRight' && pageIndex + 1 < sections.length) {
+        if (event.key === 'ArrowRight' && pageIndex + 1 < book.flow.length) {
           dispatch({
             type: BookDataType.update_page,
             payload: {
-              page: sections[pageIndex + 1].flow.href,
+              page: book.flow[pageIndex + 1].href,
               pageIndex: pageIndex + 1
             }
           });
@@ -68,13 +51,13 @@ export const Book: React.FC<Props> = () => {
           dispatch({
             type: BookDataType.update_page,
             payload: {
-              page: sections[pageIndex - 1].flow.href,
+              page: book.flow[pageIndex - 1].href,
               pageIndex: pageIndex - 1
             }
           });
         }
       }}>
-      {sections[pageIndex]?.section}
+      <Section section={book.flow[pageIndex]} key={book.flow[pageIndex].id} />
     </div>
   );
 };

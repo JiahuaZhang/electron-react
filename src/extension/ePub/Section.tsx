@@ -10,6 +10,8 @@ import {
   generateHighlight,
   isClickInside
 } from './utils/highlight';
+import { BookDataContext } from './Data/bookDataContext';
+import { BookDataType } from './Data/bookDataHook';
 
 const { ipcRenderer } = window.require('electron');
 const default_highlight_colors = ['#ffeb3b', '#ff9800', '#ff5722', '#673ab7', '#03a9f4', '#4caf50'];
@@ -56,7 +58,6 @@ const getAbsolutePanelPosistion = (
 };
 
 export const Section: React.FC<Props> = ({ section }) => {
-  const [originalHtml, setOriginalHtml] = useState('');
   const [html, setHtml] = useState(<></>);
   const book = useContext(BookContext);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -66,6 +67,8 @@ export const Section: React.FC<Props> = ({ section }) => {
   const [highlights, setHighlights] = useState<HighlightSection[]>([]);
   const [recentHighlight, setRecentHighlight] = useState({} as HighlighAction);
   const [refresh, setRefresh] = useState(false);
+  const { dispatch, state } = React.useContext(BookDataContext);
+  const [hasInitHighlights, setHasInitHighlights] = useState(false);
 
   useEffect(() => {
     if (!book) {
@@ -101,7 +104,6 @@ export const Section: React.FC<Props> = ({ section }) => {
         text = text.replace(attributes[0], `href="${href}"`);
       }
 
-      setOriginalHtml(text);
       setHtml(<div dangerouslySetInnerHTML={{ __html: text }}></div>);
     });
   }, [section, book]);
@@ -116,8 +118,15 @@ export const Section: React.FC<Props> = ({ section }) => {
             return;
           }
 
-          const range = selection.getRangeAt(0);
           const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
+          if (
+            !section_ref.contains(selection.anchorNode) ||
+            !section_ref.contains(selection.focusNode)
+          ) {
+            return;
+          }
+
+          const range = selection.getRangeAt(0);
           const highlightAction = generateHighlight(range, section_ref) as HighlighAction;
 
           highlightAction.status = 'add';
@@ -140,6 +149,25 @@ export const Section: React.FC<Props> = ({ section }) => {
 
     wrapperRef.current?.addEventListener('selectstart', onSelectStart);
   }, []);
+
+  useEffect(() => {
+    if (hasInitHighlights || !html.props['dangerouslySetInnerHTML']) {
+      return;
+    }
+
+    const result = state.sections.find(({ id }) => id === section.id);
+    if (result?.highlights.length) {
+      setHighlights(result.highlights);
+      setRefresh(true);
+    }
+    setHasInitHighlights(true);
+  }, [state.sections, section.id, highlights, html, hasInitHighlights]);
+
+  useEffect(
+    () => () =>
+      dispatch({ type: BookDataType.update_highlights, payload: { id: section.id, highlights } }),
+    [highlights, dispatch, section.id]
+  );
 
   useEffect(() => {
     if (!recentHighlight.color) {
@@ -178,11 +206,10 @@ export const Section: React.FC<Props> = ({ section }) => {
       default:
         break;
     }
-  }, [recentHighlight, originalHtml]);
+  }, [recentHighlight]);
 
   useEffect(() => {
     if (refresh) {
-      setHtml(<div dangerouslySetInnerHTML={{ __html: originalHtml }}></div>);
       const section_ref = wrapperRef.current?.children[1];
       if (!section_ref) return;
       for (const h of highlights) {
@@ -192,7 +219,9 @@ export const Section: React.FC<Props> = ({ section }) => {
       setHighlights(values => values.filter(highlight => highlight.color !== 'white'));
     }
     setRefresh(false);
-  }, [refresh, originalHtml, highlights]);
+  }, [refresh, highlights]);
+
+  useEffect(() => () => setShowPanel(false), []);
 
   const closeShowPanel = (event: React.MouseEvent) => {
     if (!showPanel) {

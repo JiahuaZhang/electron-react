@@ -2,18 +2,30 @@ import { useReducer, useEffect } from 'react';
 
 import { BookData, defaultBookData } from '../model/bookData';
 import { EPub, manifest } from '../model/book.type';
+import { HighlightSection } from '../utils/highlight';
 
 const { ipcRenderer } = window.require('electron');
 
 export enum BookDataType {
   load,
   init_with_default,
-  update_page
+  update_page,
+  update_highlights
+}
+
+interface PagePayload {
+  page: string;
+  pageIndex: number;
+}
+
+interface HighlightPayload {
+  id: string;
+  highlights: HighlightSection[];
 }
 
 export interface BookDataAction {
   type: BookDataType;
-  payload?: BookData | { page: string; pageIndex: number };
+  payload?: BookData | PagePayload | HighlightPayload;
 }
 
 export interface BookDataHook {
@@ -29,10 +41,15 @@ const reducer = (state: BookData, { type, payload }: BookDataAction) => {
     case BookDataType.init_with_default:
       return defaultBookData;
     case BookDataType.update_page:
-      new_state.page = payload?.page as string;
-      new_state.pageIndex = payload?.pageIndex as number;
+      const { page, pageIndex } = payload as PagePayload;
+      new_state.page = page;
+      new_state.pageIndex = pageIndex;
       return new_state;
-
+    case BookDataType.update_highlights:
+      const { id, highlights } = payload as HighlightPayload;
+      new_state.sections = new_state.sections.filter(section => section.id !== id);
+      new_state.sections = [...new_state.sections, { id, highlights }];
+      return new_state;
     default:
       return state;
   }
