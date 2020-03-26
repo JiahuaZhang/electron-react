@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout, Icon, Menu } from 'antd';
 import 'antd/dist/antd.css';
+import { Layout, Menu } from 'antd';
+import { BookOutlined, HomeOutlined } from '@ant-design/icons';
 
 import './App.sass';
 import { FolderPage } from './Page/FolderPage';
@@ -84,13 +85,14 @@ const App: React.FC = () => {
         <Menu selectedKeys={[activeKey.toString()]}>
           {state.map(({ key, type, title }) => (
             <Menu.Item key={key} onClick={() => setActiveKey(key)}>
-              <Icon type={type} />
+              {type === 'book' && <BookOutlined />}
+              {type === 'home' && <HomeOutlined />}
               {title}
             </Menu.Item>
           ))}
         </Menu>
       </Sider>
-      <Layout style={{ overflow: 'auto', background: 'white' }}>
+      <Layout style={{ overflow: 'auto', backgroundColor: 'white' }}>
         {
           <div style={{ width: '100%', height: '100%' }} key={activeKey}>
             {renderedContent()}

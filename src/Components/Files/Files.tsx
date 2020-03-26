@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Tabs, Row, Col, Typography, message, Icon } from 'antd';
+import { Tabs, Row, Col, Typography, message } from 'antd';
+import { UpOutlined } from '@ant-design/icons';
 import FileIcon from 'react-file-icon';
 import path from 'path';
 
+import './Files.sass';
 import { getType } from './extensions';
 import { fileIconProps, fileHandler } from '../../extension/ePub/model/epub';
 
@@ -50,7 +52,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
   const [state, setState] = useState([] as any[]);
   const [activeKey, setActiveKey] = useState('');
   const [toggle, setToggle] = useState(true);
-  const [toggleIcon, setToggleIcon] = useState(<Icon type="up" style={{ color: '#000000b3' }} />);
+  const [toggleIcon, setToggleIcon] = useState(<UpOutlined />);
 
   const adjustDirectory = useCallback((directory: string) => {
     const init_state = getNav(directory).map((tab: string) => ({ tab, files: [] }));
@@ -64,7 +66,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
   useEffect(() => adjustDirectory(directory), [directory, adjustDirectory]);
   useEffect(() => {
     if (toggle) {
-      setToggleIcon(<Icon type="up" style={{ color: '#000000b3' }} />);
+      setToggleIcon(<UpOutlined />);
     } else {
       setToggleIcon(<></>);
     }
@@ -145,7 +147,7 @@ export const Files: React.FC<Props> = ({ directory = '/', fileHandlers }) => {
     <Tabs onChange={navigate} activeKey={activeKey}>
       {state.map(({ tab, files }, index) => (
         <TabPane key={`${tab}-${index}`} tab={tab}>
-          <Row key={index} type="flex" gutter={[{ xs: 8, sm: 16, md: 24, lg: 32 }, 20]}>
+          <Row key={index} gutter={[{ xs: 8, sm: 16, md: 24, lg: 32 }, 20]}>
             {files.map((f: fileIconProps, index: number) => renderFileIcon(f, index))}
           </Row>
         </TabPane>

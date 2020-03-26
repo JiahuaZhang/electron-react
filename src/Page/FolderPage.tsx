@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button, Row, Col } from 'antd';
+import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
 
 import { Files } from '../Components/Files/Files';
 import { fileHandler } from '../extension/ePub/model/epub';
@@ -38,12 +39,21 @@ export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
               justifyItems: 'end',
               padding: '.5rem 1rem'
             }}>
-            <Button onClick={() => removePanel(key)} icon="close" type="danger" shape="circle" />
+            <Button
+              onClick={() => removePanel(key)}
+              icon={<CloseOutlined />}
+              type="danger"
+              shape="circle"
+            />
           </div>
           {content}
         </Col>
       ))}
-      <Button type="primary" icon="plus" onClick={newFolderPanel} style={{ margin: '.75rem' }}>
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={newFolderPanel}
+        style={{ margin: '.75rem' }}>
         New Foldr Panel
       </Button>
     </Row>

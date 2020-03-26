@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Affix, Icon } from 'antd';
+import { Affix } from 'antd';
+import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { manifest, EPub } from './model/book.type';
 import { BookContext } from './bookContext';
@@ -271,7 +272,7 @@ export const Section: React.FC<Props> = ({ section }) => {
   return (
     <div
       ref={wrapperRef}
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', backgroundColor: 'white' }}
       onClick={event => {
         closeShowPanel(event);
         clickHighlight(event);
@@ -317,14 +318,12 @@ export const Section: React.FC<Props> = ({ section }) => {
               }}></span>
           ))}
           {recentHighlight.status === 'add' ? (
-            <Icon
-              type="close"
-              style={{ width: 18, cursor: 'pointer' }}
+            <CloseOutlined
               onClick={() => setShowPanel(false)}
+              style={{ width: 18, cursor: 'pointer' }}
             />
           ) : (
-            <Icon
-              type="delete"
+            <DeleteOutlined
               style={{ width: 18, cursor: 'pointer' }}
               onClick={() => {
                 setShowPanel(false);

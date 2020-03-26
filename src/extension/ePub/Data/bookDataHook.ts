@@ -87,11 +87,11 @@ export const useBookData = (book: EPub): BookDataHook => {
   useEffect(() => {
     ipcRenderer.send('load book data', title);
     ipcRenderer.once(`load book ${title} data`, (event, data) => {
-      data = JSON.parse(data);
       if (!data) {
         dispatch({ type: BookDataType.init_with_default });
       } else {
-        dispatch({ type: BookDataType.load, payload: data });
+        data = new TextDecoder('utf-8').decode(data);
+        dispatch({ type: BookDataType.load, payload: JSON.parse(data) });
       }
     });
   }, [dispatch, title]);

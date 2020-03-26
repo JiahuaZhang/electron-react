@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout, Menu, Icon } from 'antd';
 import { fromEvent, Subscription } from 'rxjs';
 import { throttleTime, tap } from 'rxjs/operators';
+import { Layout, Menu } from 'antd';
+import { MenuOutlined, CloseCircleFilled, SettingOutlined } from '@ant-design/icons';
 
 import './Screen.sass';
 import { EPub } from './model/book.type';
@@ -87,22 +88,16 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
       <Header>
         <Menu mode="horizontal" selectedKeys={selectedKeys} style={{ display: 'flex' }}>
           <Menu.Item onClick={({ key }) => togglePanel(key, 'tableOfContents')}>
-            <Icon type="menu" />
+            <MenuOutlined />
           </Menu.Item>
           <Menu.Item onClick={({ key }) => togglePanel(key, 'configuration')}>
-            <Icon type="setting" />
+            <SettingOutlined />
           </Menu.Item>
           {discard && (
             <Menu.Item style={{ marginLeft: 'auto' }}>
-              <Icon
+              <CloseCircleFilled
                 onClick={discard}
-                type="close-circle"
-                theme="filled"
-                style={{
-                  fontSize: '2rem',
-                  verticalAlign: 'middle',
-                  color: 'red'
-                }}
+                style={{ fontSize: '2rem', verticalAlign: 'middle', color: 'red' }}
               />
             </Menu.Item>
           )}

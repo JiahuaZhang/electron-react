@@ -58,7 +58,7 @@ export interface EpubConfigSetting {
 }
 
 export const useConfig = (): EpubConfigSetting => {
-  const [state = default_epub_config, dispatch] = useReducer(reducer, {} as epubConfig);
+  const [state, dispatch] = useReducer(reducer, {} as epubConfig);
 
   const { style, setting } = state;
   const fontSize = style?.fontSize;
@@ -68,7 +68,12 @@ export const useConfig = (): EpubConfigSetting => {
   useEffect(() => {
     ipcRenderer.send('load epub config');
     ipcRenderer.once('load epub config', (event, config) => {
-      dispatch({ type: ConfigType.init, payload: JSON.parse(config) });
+      if (!config) {
+        dispatch({ type: ConfigType.init, payload: default_epub_config });
+      } else {
+        config = new TextDecoder('utf-8').decode(config);
+        dispatch({ type: ConfigType.init, payload: JSON.parse(config) });
+      }
     });
   }, [dispatch]);
 
