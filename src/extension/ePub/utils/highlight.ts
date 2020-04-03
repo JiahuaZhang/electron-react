@@ -74,17 +74,9 @@ export const generateHighlight = (range: Range, node: Node) => {
   return highlightSection;
 };
 
-export const highlightSelection = (
-  document: Document,
-  highlight: HighlightSection,
-  parent: Node
-) => {
-  if (!highlight || !highlight) return;
+export const getRange = (document: Document, highlight: HighlightSection, parent: Node) => {
+  if (!highlight) return;
 
-  const selection = document.getSelection();
-  if (!selection) return;
-
-  selection.removeAllRanges();
   const [start_container, start_offset] = getAdjustedNode(
     parent,
     highlight.path_to_start_container,
@@ -100,6 +92,21 @@ export const highlightSelection = (
   range.setStart(start_container, start_offset);
   range.setEnd(end_container, end_offset);
 
+  return range;
+};
+
+export const highlightSelection = (
+  document: Document,
+  highlight: HighlightSection,
+  parent: Node
+) => {
+  const range = getRange(document, highlight, parent);
+  if (!range) return;
+
+  const selection = document.getSelection();
+  if (!selection) return;
+
+  selection.removeAllRanges();
   selection.addRange(range);
 
   document.designMode = 'on';
@@ -159,4 +166,32 @@ export const isClickInside = (parent: Node, target: Node, highlight: HighlightSe
   }
 
   return is_before_end;
+};
+
+export const compareHighlight = (a: HighlightSection, b: HighlightSection) => {
+  for (let i = 0; i < a.path_to_start_container.length; ++i) {
+    if (a.path_to_start_container[i] !== b.path_to_start_container[i]) {
+      return a.path_to_start_container[i] - b.path_to_start_container[i];
+    }
+  }
+
+  if (a.path_to_start_container.length !== b.path_to_start_container.length) {
+    return a.path_to_start_container.length - b.path_to_start_container.length;
+  }
+
+  if (a.start_offset !== b.start_offset) {
+    return a.start_offset - b.start_offset;
+  }
+
+  for (let i = 0; i < a.path_to_end_container.length; ++i) {
+    if (a.path_to_end_container[i] !== b.path_to_end_container[i]) {
+      return a.path_to_end_container[i] - b.path_to_end_container[i];
+    }
+  }
+
+  if (a.path_to_end_container.length !== b.path_to_end_container.length) {
+    return a.path_to_end_container.length - b.path_to_end_container.length;
+  }
+
+  return a.end_offset - b.end_offset;
 };

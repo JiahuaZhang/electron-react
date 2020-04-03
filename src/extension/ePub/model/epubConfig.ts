@@ -24,3 +24,16 @@ export const default_epub_config: epubConfig = {
   },
   setting: {}
 };
+
+export const default_english_fonts = [
+  '-apple-system',
+  'BlinkMacSystemFont',
+  'Segoe UI',
+  'Roboto',
+  'Helvetica',
+  'Arial',
+  'sans-serif',
+  'Apple Color Emoji',
+  'Segoe UI Emoji',
+  'Segoe UI Symbol'
+];

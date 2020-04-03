@@ -6,21 +6,9 @@ import { BookContext } from './bookContext';
 import { ConfigContext } from './Configuration/configContext';
 import { BookDataType } from './Data/bookDataHook';
 import { BookDataContext } from './Data/bookDataContext';
+import { default_english_fonts } from './model/epubConfig';
 
 interface Props {}
-
-const default_english_fonts = [
-  '-apple-system',
-  'BlinkMacSystemFont',
-  'Segoe UI',
-  'Roboto',
-  'Helvetica',
-  'Arial',
-  'sans-serif',
-  'Apple Color Emoji',
-  'Segoe UI Emoji',
-  'Segoe UI Symbol'
-];
 
 export const Book: React.FC<Props> = () => {
   const book = React.useContext(BookContext);

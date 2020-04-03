@@ -9,13 +9,23 @@ import {
   HighlightSection,
   isSameRange,
   generateHighlight,
-  isClickInside
+  isClickInside,
+  getRange,
+  compareHighlight
 } from './utils/highlight';
 import { BookDataContext } from './Data/bookDataContext';
 import { BookDataType } from './Data/bookDataHook';
+import { NotesContext, NotesType, Notes } from './Panel/Notes/NotesHook';
 
 const { ipcRenderer } = window.require('electron');
-const default_highlight_colors = ['#ffeb3b', '#ff9800', '#ff5722', '#673ab7', '#03a9f4', '#4caf50'];
+const default_highlight_colors = [
+  '#ffeb3b',
+  '#ff9800',
+  '#f72a1b',
+  '#a900ff5e',
+  '#03a9f466',
+  '#15ff1e'
+];
 
 interface Props {
   section: manifest;
@@ -70,6 +80,7 @@ export const Section: React.FC<Props> = ({ section }) => {
   const [refresh, setRefresh] = useState(false);
   const { dispatch, state } = React.useContext(BookDataContext);
   const [hasInitHighlights, setHasInitHighlights] = useState(false);
+  const { dispatch: notesDispatch } = React.useContext(NotesContext);
 
   useEffect(() => {
     if (!book) {
@@ -223,6 +234,15 @@ export const Section: React.FC<Props> = ({ section }) => {
   }, [refresh, highlights]);
 
   useEffect(() => () => setShowPanel(false), []);
+
+  useEffect(() => {
+    const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
+    const payload = highlights.sort(compareHighlight).map(highlight => {
+      const range = getRange(document, highlight, section_ref);
+      return { text: range?.toString(), backgroundColor: highlight.color } as Notes;
+    });
+    notesDispatch({ type: NotesType.persist, payload });
+  }, [highlights, notesDispatch]);
 
   const closeShowPanel = (event: React.MouseEvent) => {
     if (!showPanel) {

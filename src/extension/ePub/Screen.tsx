@@ -2,7 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fromEvent, Subscription } from 'rxjs';
 import { throttleTime, tap } from 'rxjs/operators';
 import { Layout, Menu } from 'antd';
-import { MenuOutlined, CloseCircleFilled, SettingOutlined } from '@ant-design/icons';
+import {
+  MenuOutlined,
+  CloseCircleFilled,
+  SettingOutlined,
+  ProfileOutlined
+} from '@ant-design/icons';
 
 import './Screen.sass';
 import { EPub } from './model/book.type';
@@ -14,6 +19,8 @@ import { useConfig } from './Configuration/configHook';
 import { ConfigContext } from './Configuration/configContext';
 import { BookDataContext } from './Data/bookDataContext';
 import { useBookData } from './Data/bookDataHook';
+import { NotesPanel } from './Panel/Notes/NotesPanel';
+import { NotesContext, useNotes } from './Panel/Notes/NotesHook';
 
 const { Header, Content, Sider } = Layout;
 
@@ -24,10 +31,6 @@ interface Props {
 
 export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [activePanel, setActivePanel] = useState('tableOfContents');
-  const [panels, setPanels] = useState([
-    { id: 'tableOfContents', content: <></> },
-    { id: 'configuration', content: <ConfigPanel /> }
-  ]);
   const [showPanel, setShowPanel] = useState(false);
   const sider = useRef<HTMLDivElement>(null);
   const [selectedKeys, setSelectedKeys] = useState(['']);
@@ -35,29 +38,13 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   const changingSiderWidth = useRef<Subscription>(new Subscription());
   const epubConfig = useConfig();
   const bookData = useBookData(book);
-
-  useEffect(
-    () =>
-      setPanels(panels =>
-        panels.map(panel =>
-          panel.id === 'tableOfContents'
-            ? { id: 'tableOfContents', content: <TableOfContents /> }
-            : panel
-        )
-      ),
-    [book]
-  );
+  const bookNotes = useNotes();
 
   useEffect(() => {
     const onMouseUp = () => changingSiderWidth.current.unsubscribe();
     window.addEventListener('mouseup', onMouseUp);
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, []);
-
-  const getCurrentPanel = () => {
-    const panel = panels.find(({ id }) => id === activePanel);
-    return panel ? panel.content : <></>;
-  };
 
   const togglePanel = (key: string, id: string) => {
     if (showPanel) {
@@ -93,6 +80,9 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
           <Menu.Item onClick={({ key }) => togglePanel(key, 'configuration')}>
             <SettingOutlined />
           </Menu.Item>
+          <Menu.Item onClick={({ key }) => togglePanel(key, 'notes')}>
+            <ProfileOutlined />
+          </Menu.Item>
           {discard && (
             <Menu.Item style={{ marginLeft: 'auto' }}>
               <CloseCircleFilled
@@ -105,7 +95,11 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
       </Header>
       <Layout style={{ overflow: 'hidden', backgroundColor: 'white' }}>
         <Sider width={showPanel ? siderWidth : 0} style={{ overflow: 'auto' }} theme="light">
-          <div ref={sider}>{getCurrentPanel()}</div>
+          <div ref={sider}>
+            {activePanel === 'tableOfContents' && <TableOfContents />}
+            {activePanel === 'configuration' && <ConfigPanel />}
+            {activePanel === 'notes' && <NotesPanel />}
+          </div>
         </Sider>
         <Content
           style={{
@@ -142,7 +136,9 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   return (
     <ConfigContext.Provider value={epubConfig}>
       <BookContext.Provider value={book}>
-        <BookDataContext.Provider value={bookData}>{result}</BookDataContext.Provider>
+        <NotesContext.Provider value={bookNotes}>
+          <BookDataContext.Provider value={bookData}>{result}</BookDataContext.Provider>
+        </NotesContext.Provider>
       </BookContext.Provider>
     </ConfigContext.Provider>
   );
