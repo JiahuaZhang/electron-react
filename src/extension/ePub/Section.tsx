@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Affix } from 'antd';
+import { Affix, Modal, notification } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { manifest, EPub } from './model/book.type';
@@ -11,20 +11,20 @@ import {
   generateHighlight,
   isClickInside,
   getRange,
-  compareHighlight
+  compareHighlight,
 } from './utils/highlight';
 import { BookDataContext } from './Data/bookDataContext';
 import { BookDataType } from './Data/bookDataHook';
 import { NotesContext, NotesType, Notes } from './Panel/Notes/NotesHook';
 
-const { ipcRenderer } = window.require('electron');
+const { ipcRenderer, nativeImage, clipboard } = window.require('electron');
 const default_highlight_colors = [
   '#ffeb3b',
   '#ff9800',
   '#f72a1b',
   '#a900ff5e',
   '#03a9f466',
-  '#15ff1e'
+  '#15ff1e',
 ];
 
 interface Props {
@@ -36,9 +36,9 @@ interface HighlighAction extends HighlightSection {
 }
 
 const redirectedHref = (book: EPub, href: string): Promise<string> =>
-  new Promise<string>(res => {
+  new Promise<string>((res) => {
     const fileName = href.split('/').pop() || '';
-    if (!Object.values(book.manifest).find(m => m.href.includes(fileName))) {
+    if (!Object.values(book.manifest).find((m) => m.href.includes(fileName))) {
       res(href);
     }
 
@@ -81,6 +81,7 @@ export const Section: React.FC<Props> = ({ section }) => {
   const { dispatch, state } = React.useContext(BookDataContext);
   const [hasInitHighlights, setHasInitHighlights] = useState(false);
   const { dispatch: notesDispatch } = React.useContext(NotesContext);
+  const [zoomInImage, setZoomInImage] = useState({ src: '', show: false });
 
   useEffect(() => {
     if (!book) {
@@ -124,7 +125,7 @@ export const Section: React.FC<Props> = ({ section }) => {
     const onSelectStart = (event: Event) => {
       wrapperRef.current?.addEventListener(
         'mouseup',
-        event => {
+        (event) => {
           const selection = document.getSelection();
           if (!selection?.toString().trim()) {
             return;
@@ -192,19 +193,19 @@ export const Section: React.FC<Props> = ({ section }) => {
     switch (recentHighlight?.status) {
       case 'add':
         highlightSelection(document, recentHighlight, section_ref);
-        setHighlights(values => [...values, recentHighlight]);
+        setHighlights((values) => [...values, recentHighlight]);
         break;
 
       case 'update':
         highlightSelection(document, recentHighlight, section_ref);
-        setHighlights(values => {
-          values = values.filter(value => !isSameRange(value, recentHighlight));
+        setHighlights((values) => {
+          values = values.filter((value) => !isSameRange(value, recentHighlight));
           return [...values, recentHighlight];
         });
         break;
 
       case 'delete':
-        setHighlights(values =>
+        setHighlights((values) =>
           values.reduce<HighlightSection[]>((accumulator, current) => {
             if (isSameRange(current, recentHighlight)) {
               return [{ ...current, color: 'white' }, ...accumulator];
@@ -228,7 +229,7 @@ export const Section: React.FC<Props> = ({ section }) => {
         highlightSelection(document, h, section_ref);
       }
       document.getSelection()?.removeAllRanges();
-      setHighlights(values => values.filter(highlight => highlight.color !== 'white'));
+      setHighlights((values) => values.filter((highlight) => highlight.color !== 'white'));
     }
     setRefresh(false);
   }, [refresh, highlights]);
@@ -237,7 +238,7 @@ export const Section: React.FC<Props> = ({ section }) => {
 
   useEffect(() => {
     const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
-    const payload = highlights.sort(compareHighlight).map(highlight => {
+    const payload = highlights.sort(compareHighlight).map((highlight) => {
       const range = getRange(document, highlight, section_ref);
       return { text: range?.toString(), backgroundColor: highlight.color } as Notes;
     });
@@ -289,20 +290,29 @@ export const Section: React.FC<Props> = ({ section }) => {
     }
   };
 
+  const clickOnImage = (event: React.MouseEvent) => {
+    const { target } = event;
+    if ((target as HTMLElement).tagName === 'IMG') {
+      const { src } = target as HTMLImageElement;
+      setZoomInImage({ show: true, src });
+    }
+  };
+
   return (
     <div
       ref={wrapperRef}
       style={{ position: 'relative', backgroundColor: 'white' }}
-      onClick={event => {
+      onClick={(event) => {
         closeShowPanel(event);
         clickHighlight(event);
-      }}>
+      }}
+      onDoubleClick={clickOnImage}>
       <Affix
         style={{
           position: 'absolute',
           top: panelPosition.top,
           left: panelPosition.left,
-          visibility: showPanel ? 'visible' : 'hidden'
+          visibility: showPanel ? 'visible' : 'hidden',
         }}>
         <div
           ref={panelRef}
@@ -316,12 +326,12 @@ export const Section: React.FC<Props> = ({ section }) => {
             border: '1px solid #1890ff5c',
             borderRadius: 7,
             background: 'linear-gradient(to right, #e0eafc, #cfdef3)',
-            alignItems: 'center'
+            alignItems: 'center',
           }}>
-          {default_highlight_colors.map(color => (
+          {default_highlight_colors.map((color) => (
             <span
-              onClick={event => {
-                setRecentHighlight(highlight => ({ ...highlight, color }));
+              onClick={(event) => {
+                setRecentHighlight((highlight) => ({ ...highlight, color }));
                 setShowPanel(false);
                 setTimeout(() => {
                   document.getSelection()?.removeAllRanges();
@@ -334,7 +344,7 @@ export const Section: React.FC<Props> = ({ section }) => {
                 borderRadius: '50%',
                 backgroundColor: color,
                 display: 'inline-block',
-                cursor: 'pointer'
+                cursor: 'pointer',
               }}></span>
           ))}
           {recentHighlight.status === 'add' ? (
@@ -347,12 +357,29 @@ export const Section: React.FC<Props> = ({ section }) => {
               style={{ width: 18, cursor: 'pointer' }}
               onClick={() => {
                 setShowPanel(false);
-                setRecentHighlight(highlight => ({ ...highlight, status: 'delete' }));
+                setRecentHighlight((highlight) => ({ ...highlight, status: 'delete' }));
               }}
             />
           )}
         </div>
       </Affix>
+      <Modal
+        visible={zoomInImage.show}
+        footer={null}
+        onCancel={() => setZoomInImage({ src: '', show: false })}>
+        <img
+          onDoubleClick={() => {
+            const { src } = zoomInImage;
+            const path = `public/${decodeURI(src.substring(src.indexOf('assets')))}`;
+            const image = nativeImage.createFromPath(path);
+            clipboard.writeImage(image);
+            notification.success({ message: 'Image copied!', duration: 1.5 });
+          }}
+          style={{ marginTop: '1rem' }}
+          src={zoomInImage.src}
+          alt=""
+        />
+      </Modal>
       {html}
     </div>
   );
