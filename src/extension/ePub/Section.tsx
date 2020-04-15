@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Affix, Modal, notification } from 'antd';
+import { Affix, Modal, notification, Checkbox } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { manifest, EPub } from './model/book.type';
@@ -55,7 +55,8 @@ const getAbsolutePanelPosistion = (
   window: Window
 ) => {
   const rect = parent.getBoundingClientRect();
-  const left =
+
+  let left =
     event.offsetX + panel.clientWidth > rect.width ? rect.width - panel.clientWidth : event.offsetX;
   const top =
     event.y + panel.clientHeight > window.innerHeight
@@ -65,6 +66,16 @@ const getAbsolutePanelPosistion = (
         panel.clientHeight
       : (parent.parentElement?.parentElement?.scrollTop as number) + event.y - parent.offsetTop;
 
+  const element = event.target as HTMLElement;
+  if (element.tagName === 'IMG') {
+    const { offsetLeft } = element;
+
+    left =
+      event.offsetX + offsetLeft + panel.clientWidth > rect.width
+        ? rect.width - panel.clientWidth
+        : event.offsetX + offsetLeft;
+  }
+
   return { left, top };
 };
 
@@ -73,8 +84,11 @@ export const Section: React.FC<Props> = ({ section }) => {
   const book = useContext(BookContext);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const imagePanelRef = useRef<HTMLDivElement>(null);
   const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0 });
   const [showPanel, setShowPanel] = useState(false);
+  const [showImagePanel, setshowImagePanel] = useState(false);
   const [highlights, setHighlights] = useState<HighlightSection[]>([]);
   const [recentHighlight, setRecentHighlight] = useState({} as HighlighAction);
   const [refresh, setRefresh] = useState(false);
@@ -131,7 +145,7 @@ export const Section: React.FC<Props> = ({ section }) => {
             return;
           }
 
-          const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
+          const section_ref = contentRef.current as HTMLDivElement;
           if (
             !section_ref.contains(selection.anchorNode) ||
             !section_ref.contains(selection.focusNode)
@@ -187,17 +201,17 @@ export const Section: React.FC<Props> = ({ section }) => {
       return;
     }
 
-    const section_ref = wrapperRef.current?.children[1];
-    if (!section_ref) return;
+    const content_ref = contentRef.current as HTMLDivElement;
+    if (!content_ref) return;
 
     switch (recentHighlight?.status) {
       case 'add':
-        highlightSelection(document, recentHighlight, section_ref);
+        highlightSelection(document, recentHighlight, content_ref);
         setHighlights((values) => [...values, recentHighlight]);
         break;
 
       case 'update':
-        highlightSelection(document, recentHighlight, section_ref);
+        highlightSelection(document, recentHighlight, content_ref);
         setHighlights((values) => {
           values = values.filter((value) => !isSameRange(value, recentHighlight));
           return [...values, recentHighlight];
@@ -223,10 +237,10 @@ export const Section: React.FC<Props> = ({ section }) => {
 
   useEffect(() => {
     if (refresh) {
-      const section_ref = wrapperRef.current?.children[1];
-      if (!section_ref) return;
+      const content_ref = contentRef.current as HTMLDivElement;
+      if (!content_ref) return;
       for (const h of highlights) {
-        highlightSelection(document, h, section_ref);
+        highlightSelection(document, h, content_ref);
       }
       document.getSelection()?.removeAllRanges();
       setHighlights((values) => values.filter((highlight) => highlight.color !== 'white'));
@@ -234,12 +248,10 @@ export const Section: React.FC<Props> = ({ section }) => {
     setRefresh(false);
   }, [refresh, highlights]);
 
-  useEffect(() => () => setShowPanel(false), []);
-
   useEffect(() => {
-    const section_ref = (wrapperRef.current as HTMLDivElement).childNodes[1];
+    const content_ref = contentRef.current as HTMLDivElement;
     const payload = highlights.sort(compareHighlight).map((highlight) => {
-      const range = getRange(document, highlight, section_ref);
+      const range = getRange(document, highlight, content_ref);
       return { text: range?.toString(), backgroundColor: highlight.color } as Notes;
     });
     notesDispatch({ type: NotesType.persist, payload });
@@ -255,26 +267,28 @@ export const Section: React.FC<Props> = ({ section }) => {
       return;
     }
 
-    if (!document.getSelection()?.toString()) {
+    if (document.getSelection()?.toString()) {
+      highlightSelection(document, recentHighlight, contentRef.current as Node);
+    } else {
       setShowPanel(false);
     }
   };
 
   const clickHighlight = (event: React.MouseEvent) => {
     const target = event.target as Node;
-    const section_ref = wrapperRef.current?.children[1];
+    const content_ref = contentRef.current as HTMLDivElement;
 
     if (
       target.nodeName !== 'SPAN' ||
-      target === section_ref ||
+      target === content_ref ||
       panelRef.current?.contains(target) ||
-      !section_ref
+      !content_ref
     ) {
       return;
     }
 
     for (const highlight of highlights.reverse()) {
-      if (isClickInside(section_ref, target, highlight)) {
+      if (isClickInside(content_ref, target, highlight)) {
         setPanelPosition(
           getAbsolutePanelPosistion(
             wrapperRef.current as HTMLDivElement,
@@ -298,6 +312,14 @@ export const Section: React.FC<Props> = ({ section }) => {
     }
   };
 
+  const closeImagePanel = (event: React.MouseEvent) => {
+    if (imagePanelRef.current?.contains(event.target as Node)) {
+      return;
+    }
+
+    setshowImagePanel(false);
+  };
+
   return (
     <div
       ref={wrapperRef}
@@ -305,8 +327,23 @@ export const Section: React.FC<Props> = ({ section }) => {
       onClick={(event) => {
         closeShowPanel(event);
         clickHighlight(event);
+        closeImagePanel(event);
       }}
-      onDoubleClick={clickOnImage}>
+      onDoubleClick={clickOnImage}
+      onAuxClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'IMG') {
+          setPanelPosition(
+            getAbsolutePanelPosistion(
+              wrapperRef.current as HTMLDivElement,
+              imagePanelRef.current as HTMLDivElement,
+              event.nativeEvent,
+              window
+            )
+          );
+          setshowImagePanel(true);
+        }
+      }}>
       <Affix
         style={{
           position: 'absolute',
@@ -363,6 +400,17 @@ export const Section: React.FC<Props> = ({ section }) => {
           )}
         </div>
       </Affix>
+      <Affix
+        style={{
+          position: 'absolute',
+          top: panelPosition.top,
+          left: panelPosition.left,
+          visibility: showImagePanel ? 'visible' : 'hidden',
+        }}>
+        <div ref={imagePanelRef}>
+          <Checkbox style={{ background: 'white', padding: '.5rem' }}>image</Checkbox>
+        </div>
+      </Affix>
       <Modal
         visible={zoomInImage.show}
         footer={null}
@@ -380,7 +428,7 @@ export const Section: React.FC<Props> = ({ section }) => {
           alt=""
         />
       </Modal>
-      {html}
+      <div ref={contentRef}>{html}</div>
     </div>
   );
 };
