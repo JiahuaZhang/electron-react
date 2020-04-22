@@ -4,18 +4,18 @@ import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { manifest, EPub } from './model/book.type';
 import { BookContext } from './bookContext';
-import {
-  highlightSelection,
-  HighlightSection,
-  isSameRange,
-  generateHighlight,
-  isClickInside,
-  getRange,
-  compareHighlight,
-} from './utils/highlight';
 import { BookDataContext } from './Data/bookDataContext';
 import { BookDataType } from './Data/bookDataHook';
-import { NotesContext, NotesType, Notes } from './Panel/Notes/NotesHook';
+import { NotesContext, NotesType } from './Panel/Notes/NotesHook';
+import {
+  NoteSelection,
+  compareNote,
+  highlightNote,
+  getContent,
+  isNoteClickInside,
+} from './utils/note/note';
+import { TextSelection, textSelection, highlightSelection } from './utils/note/textSelection';
+import { ImageSelection, imageSelection } from './utils/note/imageSelection';
 
 const { ipcRenderer, nativeImage, clipboard } = window.require('electron');
 const default_highlight_colors = [
@@ -31,8 +31,8 @@ interface Props {
   section: manifest;
 }
 
-interface HighlighAction extends HighlightSection {
-  status?: 'add' | 'update' | 'delete';
+interface TextSelectionWrapper extends TextSelection {
+  status?: 'add' | 'update' | 'delete' | 'chose';
 }
 
 const redirectedHref = (book: EPub, href: string): Promise<string> =>
@@ -80,22 +80,23 @@ const getAbsolutePanelPosistion = (
 };
 
 export const Section: React.FC<Props> = ({ section }) => {
-  const [html, setHtml] = useState(<></>);
   const book = useContext(BookContext);
+  const { dispatch, state } = React.useContext(BookDataContext);
+  const { dispatch: notesDispatch } = React.useContext(NotesContext);
+  const [html, setHtml] = useState(<></>);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const imagePanelRef = useRef<HTMLDivElement>(null);
   const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0 });
-  const [showPanel, setShowPanel] = useState(false);
+  const [showTextPanel, setshowTextPanel] = useState(false);
   const [showImagePanel, setshowImagePanel] = useState(false);
-  const [highlights, setHighlights] = useState<HighlightSection[]>([]);
-  const [recentHighlight, setRecentHighlight] = useState({} as HighlighAction);
+  const [notes, setNotes] = useState<NoteSelection[]>([]);
+  const [recentTextNote, setRecentTextNote] = useState({} as TextSelectionWrapper);
   const [refresh, setRefresh] = useState(false);
-  const { dispatch, state } = React.useContext(BookDataContext);
   const [hasInitHighlights, setHasInitHighlights] = useState(false);
-  const { dispatch: notesDispatch } = React.useContext(NotesContext);
   const [zoomInImage, setZoomInImage] = useState({ src: '', show: false });
+  const [recentImageNote, setRecentImageNote] = useState({} as ImageSelection);
 
   useEffect(() => {
     if (!book) {
@@ -154,10 +155,10 @@ export const Section: React.FC<Props> = ({ section }) => {
           }
 
           const range = selection.getRangeAt(0);
-          const highlightAction = generateHighlight(range, section_ref) as HighlighAction;
+          const note = textSelection(range, section_ref) as TextSelectionWrapper;
+          note.status = 'add';
 
-          highlightAction.status = 'add';
-          setRecentHighlight(highlightAction);
+          setRecentTextNote(note);
 
           setPanelPosition(
             getAbsolutePanelPosistion(
@@ -167,7 +168,7 @@ export const Section: React.FC<Props> = ({ section }) => {
               window
             )
           );
-          setShowPanel(true);
+          setshowTextPanel(true);
           event.stopImmediatePropagation();
         },
         { once: true }
@@ -183,46 +184,49 @@ export const Section: React.FC<Props> = ({ section }) => {
     }
 
     const result = state.sections.find(({ id }) => id === section.id);
-    if (result?.highlights.length) {
-      setHighlights(result.highlights);
+    if (result?.notes?.length) {
+      setNotes(result.notes);
       setRefresh(true);
     }
     setHasInitHighlights(true);
-  }, [state.sections, section.id, highlights, html, hasInitHighlights]);
+  }, [state.sections, section.id, notes, html, hasInitHighlights]);
 
   useEffect(
-    () => () =>
-      dispatch({ type: BookDataType.update_highlights, payload: { id: section.id, highlights } }),
-    [highlights, dispatch, section.id]
+    () => () => dispatch({ type: BookDataType.update_notes, payload: { id: section.id, notes } }),
+    [notes, dispatch, section.id]
   );
 
   useEffect(() => {
-    if (!recentHighlight.color) {
+    if (!recentTextNote.color) {
       return;
     }
 
     const content_ref = contentRef.current as HTMLDivElement;
     if (!content_ref) return;
 
-    switch (recentHighlight?.status) {
+    switch (recentTextNote.status) {
+      case 'chose':
+        highlightSelection(document, recentTextNote, content_ref);
+        break;
+
       case 'add':
-        highlightSelection(document, recentHighlight, content_ref);
-        setHighlights((values) => [...values, recentHighlight]);
+        highlightSelection(document, recentTextNote, content_ref);
+        setNotes((values) => [...values, recentTextNote]);
         break;
 
       case 'update':
-        highlightSelection(document, recentHighlight, content_ref);
-        setHighlights((values) => {
-          values = values.filter((value) => !isSameRange(value, recentHighlight));
-          return [...values, recentHighlight];
+        highlightSelection(document, recentTextNote, content_ref);
+        setNotes((values) => {
+          values = values.filter((value) => !compareNote(recentTextNote, value));
+          return [...values, recentTextNote];
         });
         break;
 
       case 'delete':
-        setHighlights((values) =>
-          values.reduce<HighlightSection[]>((accumulator, current) => {
-            if (isSameRange(current, recentHighlight)) {
-              return [{ ...current, color: 'white' }, ...accumulator];
+        setNotes((values) =>
+          values.reduce<NoteSelection[]>((accumulator, current) => {
+            if (compareNote(recentTextNote, current) === 0) {
+              return [...accumulator, { ...current, color: 'white' }];
             }
             return [...accumulator, current];
           }, [])
@@ -233,32 +237,32 @@ export const Section: React.FC<Props> = ({ section }) => {
       default:
         break;
     }
-  }, [recentHighlight]);
+  }, [recentTextNote]);
 
   useEffect(() => {
     if (refresh) {
       const content_ref = contentRef.current as HTMLDivElement;
       if (!content_ref) return;
-      for (const h of highlights) {
-        highlightSelection(document, h, content_ref);
+      for (const note of notes) {
+        highlightNote(document, note, content_ref);
       }
       document.getSelection()?.removeAllRanges();
-      setHighlights((values) => values.filter((highlight) => highlight.color !== 'white'));
+      setNotes((values) =>
+        values.filter((note) => note.kind === 'image' || note.color !== 'white')
+      );
     }
     setRefresh(false);
-  }, [refresh, highlights]);
+  }, [refresh, notes]);
 
   useEffect(() => {
     const content_ref = contentRef.current as HTMLDivElement;
-    const payload = highlights.sort(compareHighlight).map((highlight) => {
-      const range = getRange(document, highlight, content_ref);
-      return { text: range?.toString(), backgroundColor: highlight.color } as Notes;
-    });
+    console.log(notes);
+    const payload = notes.sort(compareNote).map((note) => getContent(document, note, content_ref));
     notesDispatch({ type: NotesType.persist, payload });
-  }, [highlights, notesDispatch]);
+  }, [notes, notesDispatch]);
 
   const closeShowPanel = (event: React.MouseEvent) => {
-    if (!showPanel) {
+    if (!showTextPanel) {
       return;
     }
 
@@ -268,9 +272,9 @@ export const Section: React.FC<Props> = ({ section }) => {
     }
 
     if (document.getSelection()?.toString()) {
-      highlightSelection(document, recentHighlight, contentRef.current as Node);
+      highlightSelection(document, recentTextNote, contentRef.current as Node);
     } else {
-      setShowPanel(false);
+      setshowTextPanel(false);
     }
   };
 
@@ -287,8 +291,8 @@ export const Section: React.FC<Props> = ({ section }) => {
       return;
     }
 
-    for (const highlight of highlights.reverse()) {
-      if (isClickInside(content_ref, target, highlight)) {
+    for (const note of notes.reverse()) {
+      if (isNoteClickInside(content_ref, target, note)) {
         setPanelPosition(
           getAbsolutePanelPosistion(
             wrapperRef.current as HTMLDivElement,
@@ -297,8 +301,8 @@ export const Section: React.FC<Props> = ({ section }) => {
             window
           )
         );
-        setShowPanel(true);
-        setRecentHighlight({ ...highlight, status: 'update' });
+        setshowTextPanel(true);
+        setRecentTextNote({ ...note, status: 'chose' } as TextSelectionWrapper);
         return;
       }
     }
@@ -333,6 +337,8 @@ export const Section: React.FC<Props> = ({ section }) => {
       onAuxClick={(event) => {
         const target = event.target as HTMLElement;
         if (target.tagName === 'IMG') {
+          const recentImage = imageSelection(contentRef.current as Node, target);
+          setRecentImageNote(recentImage);
           setPanelPosition(
             getAbsolutePanelPosistion(
               wrapperRef.current as HTMLDivElement,
@@ -349,7 +355,7 @@ export const Section: React.FC<Props> = ({ section }) => {
           position: 'absolute',
           top: panelPosition.top,
           left: panelPosition.left,
-          visibility: showPanel ? 'visible' : 'hidden',
+          visibility: showTextPanel ? 'visible' : 'hidden',
         }}>
         <div
           ref={panelRef}
@@ -368,8 +374,8 @@ export const Section: React.FC<Props> = ({ section }) => {
           {default_highlight_colors.map((color) => (
             <span
               onClick={(event) => {
-                setRecentHighlight((highlight) => ({ ...highlight, color }));
-                setShowPanel(false);
+                setRecentTextNote((note) => ({ ...note, color }));
+                setshowTextPanel(false);
                 setTimeout(() => {
                   document.getSelection()?.removeAllRanges();
                 }, 0);
@@ -384,17 +390,17 @@ export const Section: React.FC<Props> = ({ section }) => {
                 cursor: 'pointer',
               }}></span>
           ))}
-          {recentHighlight.status === 'add' ? (
+          {recentTextNote.status === 'add' ? (
             <CloseOutlined
-              onClick={() => setShowPanel(false)}
+              onClick={() => setshowTextPanel(false)}
               style={{ width: 18, cursor: 'pointer' }}
             />
           ) : (
             <DeleteOutlined
               style={{ width: 18, cursor: 'pointer' }}
               onClick={() => {
-                setShowPanel(false);
-                setRecentHighlight((highlight) => ({ ...highlight, status: 'delete' }));
+                setshowTextPanel(false);
+                setRecentTextNote((note) => ({ ...note, status: 'delete' }));
               }}
             />
           )}
@@ -408,7 +414,22 @@ export const Section: React.FC<Props> = ({ section }) => {
           visibility: showImagePanel ? 'visible' : 'hidden',
         }}>
         <div ref={imagePanelRef}>
-          <Checkbox style={{ background: 'white', padding: '.5rem' }}>image</Checkbox>
+          <Checkbox
+            checked={
+              recentImageNote.kind &&
+              notes?.find((note) => compareNote(note, recentImageNote) === 0) !== undefined
+            }
+            onChange={(event) => {
+              if (event.target.checked) {
+                setNotes((notes) => [...notes, recentImageNote]);
+              } else {
+                setNotes(notes.filter((note) => compareNote(note, recentImageNote) !== 0));
+              }
+            }}
+            style={{ background: 'white', padding: '.5rem' }}>
+            image
+          </Checkbox>
+          )
         </div>
       </Affix>
       <Modal

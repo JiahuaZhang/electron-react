@@ -1,15 +1,15 @@
 import { useReducer, createContext, Dispatch } from 'react';
 
 export enum NotesType {
-  persist
+  persist,
 }
 
 export interface Notes {
-  text: string;
-  backgroundColor: string;
+  text?: string;
+  backgroundColor?: string;
 }
 
-interface NotesAction {
+export interface NotesAction {
   type: NotesType;
   payload: Notes[];
 }

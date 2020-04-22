@@ -1,4 +1,5 @@
-export interface HighlightSection {
+export interface TextSelection {
+  kind: 'text';
   path_to_start_container: number[];
   start_offset: number;
   path_to_end_container: number[];
@@ -60,21 +61,21 @@ export const getAdjustedNode = (parent: Node, path: number[], offset: number): [
   return [current, offset];
 };
 
-export const generateHighlight = (range: Range, node: Node) => {
-  const highlightSection = {} as HighlightSection;
+export const textSelection = (range: Range, node: Node) => {
+  const textSelection = { kind: 'text' } as TextSelection;
 
   let [path, adjusted_offset] = getAdjustedNodePath(node, range.startContainer, range.startOffset);
-  highlightSection.path_to_start_container = path;
-  highlightSection.start_offset = adjusted_offset;
+  textSelection.path_to_start_container = path;
+  textSelection.start_offset = adjusted_offset;
 
   [path, adjusted_offset] = getAdjustedNodePath(node, range.endContainer, range.endOffset);
-  highlightSection.path_to_end_container = path;
-  highlightSection.end_offset = adjusted_offset;
+  textSelection.path_to_end_container = path;
+  textSelection.end_offset = adjusted_offset;
 
-  return highlightSection;
+  return textSelection;
 };
 
-export const getRange = (document: Document, highlight: HighlightSection, parent: Node) => {
+export const getRange = (document: Document, highlight: TextSelection, parent: Node) => {
   if (!highlight) return;
 
   const [start_container, start_offset] = getAdjustedNode(
@@ -97,10 +98,10 @@ export const getRange = (document: Document, highlight: HighlightSection, parent
 
 export const highlightSelection = (
   document: Document,
-  highlight: HighlightSection,
+  textSelection: TextSelection,
   parent: Node
 ) => {
-  const range = getRange(document, highlight, parent);
+  const range = getRange(document, textSelection, parent);
   if (!range) return;
 
   const selection = document.getSelection();
@@ -110,11 +111,11 @@ export const highlightSelection = (
   selection.addRange(range);
 
   document.designMode = 'on';
-  document.execCommand('backColor', false, highlight.color);
+  document.execCommand('backColor', false, textSelection.color);
   document.designMode = 'off';
 };
 
-export const isSameRange = (range1: HighlightSection, range2: HighlightSection) => {
+export const isSameRange = (range1: TextSelection, range2: TextSelection) => {
   return (
     range1.start_offset === range2.start_offset &&
     range1.end_offset === range2.end_offset &&
@@ -123,7 +124,7 @@ export const isSameRange = (range1: HighlightSection, range2: HighlightSection) 
   );
 };
 
-export const isClickInside = (parent: Node, target: Node, highlight: HighlightSection) => {
+export const isClickInside = (parent: Node, target: Node, highlight: TextSelection) => {
   const [path, offset] = getAdjustedNodePath(parent, target, 0);
   if (path.join(',') === highlight.path_to_start_container.join(',')) {
     if (offset === highlight.start_offset) {
@@ -168,7 +169,7 @@ export const isClickInside = (parent: Node, target: Node, highlight: HighlightSe
   return is_before_end;
 };
 
-export const compareHighlight = (a: HighlightSection, b: HighlightSection) => {
+export const textSelectionCompare = (a: TextSelection, b: TextSelection) => {
   for (let i = 0; i < a.path_to_start_container.length; ++i) {
     if (a.path_to_start_container[i] !== b.path_to_start_container[i]) {
       return a.path_to_start_container[i] - b.path_to_start_container[i];

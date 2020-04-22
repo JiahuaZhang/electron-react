@@ -2,7 +2,7 @@ import { useReducer, useEffect } from 'react';
 
 import { BookData, defaultBookData } from '../model/bookData';
 import { EPub, manifest } from '../model/book.type';
-import { HighlightSection } from '../utils/highlight';
+import { NoteSelection } from '../utils/note/note';
 
 const { ipcRenderer } = window.require('electron');
 
@@ -10,7 +10,7 @@ export enum BookDataType {
   load,
   init_with_default,
   update_page,
-  update_highlights
+  update_notes,
 }
 
 interface PagePayload {
@@ -18,14 +18,14 @@ interface PagePayload {
   pageIndex: number;
 }
 
-interface HighlightPayload {
+interface NotePayload {
   id: string;
-  highlights: HighlightSection[];
+  notes: NoteSelection[];
 }
 
 export interface BookDataAction {
   type: BookDataType;
-  payload?: BookData | PagePayload | HighlightPayload;
+  payload?: BookData | PagePayload | NotePayload;
 }
 
 export interface BookDataHook {
@@ -45,10 +45,10 @@ const reducer = (state: BookData, { type, payload }: BookDataAction) => {
       new_state.page = page;
       new_state.pageIndex = pageIndex;
       return new_state;
-    case BookDataType.update_highlights:
-      const { id, highlights } = payload as HighlightPayload;
-      new_state.sections = new_state.sections.filter(section => section.id !== id);
-      new_state.sections = [...new_state.sections, { id, highlights }];
+    case BookDataType.update_notes:
+      const { id, notes } = payload as NotePayload;
+      new_state.sections = new_state.sections.filter((section) => section.id !== id);
+      new_state.sections = [...new_state.sections, { id, notes }];
       return new_state;
     default:
       return state;
@@ -63,7 +63,7 @@ export const useBookData = (book: EPub): BookDataHook => {
     ipcRenderer.send('add reference', title);
 
     const assets: { [key: string]: manifest } = {};
-    Object.values(book.manifest).forEach(m => {
+    Object.values(book.manifest).forEach((m) => {
       if (m['media-type'].match(/(css|image|font)/i)) {
         const fileName = m.href.split('/').pop() || '';
         assets[fileName] = m;
