@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Affix, Modal, notification, Checkbox } from 'antd';
-import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Modal, notification } from 'antd';
 
 import { manifest, EPub } from './model/book.type';
 import { BookContext } from './bookContext';
@@ -16,22 +15,16 @@ import {
 } from './utils/note/note';
 import { TextSelection, textSelection, highlightSelection } from './utils/note/textSelection';
 import { ImageSelection, imageSelection } from './utils/note/imageSelection';
+import { ColorPanel } from './Section/ColorPanel';
+import { ImagePanel } from './Section/ImagePanel';
 
 const { ipcRenderer, nativeImage, clipboard } = window.require('electron');
-const default_highlight_colors = [
-  '#ffeb3b',
-  '#ff9800',
-  '#f72a1b',
-  '#a900ff5e',
-  '#03a9f466',
-  '#15ff1e',
-];
 
 interface Props {
   section: manifest;
 }
 
-interface TextSelectionWrapper extends TextSelection {
+export interface TextSelectionWrapper extends TextSelection {
   status?: 'add' | 'update' | 'delete' | 'chose';
 }
 
@@ -256,7 +249,6 @@ export const Section: React.FC<Props> = ({ section }) => {
 
   useEffect(() => {
     const content_ref = contentRef.current as HTMLDivElement;
-    console.log(notes);
     const payload = notes.sort(compareNote).map((note) => getContent(document, note, content_ref));
     notesDispatch({ type: NotesType.persist, payload });
   }, [notes, notesDispatch]);
@@ -350,88 +342,22 @@ export const Section: React.FC<Props> = ({ section }) => {
           setshowImagePanel(true);
         }
       }}>
-      <Affix
-        style={{
-          position: 'absolute',
-          top: panelPosition.top,
-          left: panelPosition.left,
-          visibility: showTextPanel ? 'visible' : 'hidden',
-        }}>
-        <div
-          ref={panelRef}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(20px, 1fr))',
-            position: 'relative',
-            minWidth: 200,
-            gap: 5,
-            padding: 5,
-            border: '1px solid #1890ff5c',
-            borderRadius: 7,
-            background: 'linear-gradient(to right, #e0eafc, #cfdef3)',
-            alignItems: 'center',
-          }}>
-          {default_highlight_colors.map((color) => (
-            <span
-              onClick={(event) => {
-                setRecentTextNote((note) => ({ ...note, color }));
-                setshowTextPanel(false);
-                setTimeout(() => {
-                  document.getSelection()?.removeAllRanges();
-                }, 0);
-              }}
-              key={color}
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: '50%',
-                backgroundColor: color,
-                display: 'inline-block',
-                cursor: 'pointer',
-              }}></span>
-          ))}
-          {recentTextNote.status === 'add' ? (
-            <CloseOutlined
-              onClick={() => setshowTextPanel(false)}
-              style={{ width: 18, cursor: 'pointer' }}
-            />
-          ) : (
-            <DeleteOutlined
-              style={{ width: 18, cursor: 'pointer' }}
-              onClick={() => {
-                setshowTextPanel(false);
-                setRecentTextNote((note) => ({ ...note, status: 'delete' }));
-              }}
-            />
-          )}
-        </div>
-      </Affix>
-      <Affix
-        style={{
-          position: 'absolute',
-          top: panelPosition.top,
-          left: panelPosition.left,
-          visibility: showImagePanel ? 'visible' : 'hidden',
-        }}>
-        <div ref={imagePanelRef}>
-          <Checkbox
-            checked={
-              recentImageNote.kind &&
-              notes?.find((note) => compareNote(note, recentImageNote) === 0) !== undefined
-            }
-            onChange={(event) => {
-              if (event.target.checked) {
-                setNotes((notes) => [...notes, recentImageNote]);
-              } else {
-                setNotes(notes.filter((note) => compareNote(note, recentImageNote) !== 0));
-              }
-            }}
-            style={{ background: 'white', padding: '.5rem' }}>
-            image
-          </Checkbox>
-          )
-        </div>
-      </Affix>
+      <ColorPanel
+        panelPosition={panelPosition}
+        panelRef={panelRef}
+        recentTextNote={recentTextNote}
+        setRecentTextNote={setRecentTextNote}
+        setshowTextPanel={setshowTextPanel}
+        showTextPanel={showTextPanel}
+      />
+      <ImagePanel
+        imagePanelRef={imagePanelRef}
+        notes={notes}
+        panelPosition={panelPosition}
+        recentImageNote={recentImageNote}
+        setNotes={setNotes}
+        showImagePanel={showImagePanel}
+      />
       <Modal
         visible={zoomInImage.show}
         footer={null}
