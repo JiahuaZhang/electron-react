@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Modal, notification } from 'antd';
 
-import { manifest, EPub } from './model/book.type';
+import { manifest } from './model/book.type';
 import { BookContext } from './bookContext';
 import { BookDataContext } from './Data/bookDataContext';
 import { BookDataType } from './Data/bookDataHook';
@@ -17,8 +17,9 @@ import { TextSelection, textSelection, highlightSelection } from './utils/note/t
 import { ImageSelection, imageSelection } from './utils/note/imageSelection';
 import { ColorPanel } from './Section/ColorPanel';
 import { ImagePanel } from './Section/ImagePanel';
+import { transformHtml } from './utils/book';
 
-const { ipcRenderer, nativeImage, clipboard } = window.require('electron');
+const { nativeImage, clipboard } = window.require('electron');
 
 interface Props {
   section: manifest;
@@ -27,19 +28,6 @@ interface Props {
 export interface TextSelectionWrapper extends TextSelection {
   status?: 'add' | 'update' | 'delete' | 'chose';
 }
-
-const redirectedHref = (book: EPub, href: string): Promise<string> =>
-  new Promise<string>((res) => {
-    const fileName = href.split('/').pop() || '';
-    if (!Object.values(book.manifest).find((m) => m.href.includes(fileName))) {
-      res(href);
-    }
-
-    ipcRenderer.send('resource loaded?', book.metadata.title, fileName);
-    ipcRenderer.once(`${book.metadata.title}/${fileName} loaded`, () =>
-      res(`assets/${book.metadata.title}/${fileName}`)
-    );
-  });
 
 const getAbsolutePanelPosistion = (
   parent: HTMLElement,
@@ -98,40 +86,19 @@ export const Section: React.FC<Props> = ({ section }) => {
 
     book.getChapterRaw(section.id, async (err, text) => {
       if (err) {
-        console.error(err);
-        alert(err.message);
-        console.log(book.manifest.title, section.id);
-        console.log(book);
+        console.error(err, book.manifest.title, section.id, book);
         return;
       }
 
-      let matches = text.match(/src="(.*?)"/g) || [];
-      for (const match of matches) {
-        const attributes = match.match(/src="(?<src>.*?)"/);
-        if (!attributes || !attributes.groups) {
-          return;
-        }
-        const href = await redirectedHref(book, attributes.groups.src);
-        text = text.replace(attributes[0], `src="${href}"`);
-      }
+      const html = (await transformHtml(book, text)) as string;
 
-      matches = text.match(/link.*href="(.*?)"/g) || [];
-      for (const match of matches) {
-        const attributes = match.match(/href="(?<href>.*?)"/);
-        if (!attributes || !attributes.groups) {
-          return;
-        }
-        const href = await redirectedHref(book, attributes.groups.href);
-        text = text.replace(attributes[0], `href="${href}"`);
-      }
-
-      setHtml(<div dangerouslySetInnerHTML={{ __html: text }}></div>);
+      setHtml(<div dangerouslySetInnerHTML={{ __html: html }}></div>);
     });
   }, [section, book]);
 
   useEffect(() => {
     const onSelectStart = (event: Event) => {
-      wrapperRef.current?.addEventListener(
+      contentRef.current?.addEventListener(
         'mouseup',
         (event) => {
           const selection = document.getSelection();
@@ -139,16 +106,16 @@ export const Section: React.FC<Props> = ({ section }) => {
             return;
           }
 
-          const section_ref = contentRef.current as HTMLDivElement;
+          const content_ref = contentRef.current as HTMLDivElement;
           if (
-            !section_ref.contains(selection.anchorNode) ||
-            !section_ref.contains(selection.focusNode)
+            !content_ref.contains(selection.anchorNode) ||
+            !content_ref.contains(selection.focusNode)
           ) {
             return;
           }
 
           const range = selection.getRangeAt(0);
-          const note = textSelection(range, section_ref) as TextSelectionWrapper;
+          const note = textSelection(range, content_ref) as TextSelectionWrapper;
           note.status = 'add';
 
           setRecentTextNote(note);
@@ -168,7 +135,7 @@ export const Section: React.FC<Props> = ({ section }) => {
       );
     };
 
-    wrapperRef.current?.addEventListener('selectstart', onSelectStart);
+    contentRef.current?.addEventListener('selectstart', onSelectStart);
   }, []);
 
   useEffect(() => {
@@ -316,6 +283,33 @@ export const Section: React.FC<Props> = ({ section }) => {
     setshowImagePanel(false);
   };
 
+  const onRightClickImage = (event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (target.tagName !== 'IMG') {
+      return;
+    }
+
+    const recentImage = imageSelection(contentRef.current as Node, target);
+    setRecentImageNote(recentImage);
+    setPanelPosition(
+      getAbsolutePanelPosistion(
+        wrapperRef.current as HTMLDivElement,
+        imagePanelRef.current as HTMLDivElement,
+        event.nativeEvent,
+        window
+      )
+    );
+    setshowImagePanel(true);
+  };
+
+  const onDoubleClickImage = (event: React.MouseEvent) => {
+    const { src } = zoomInImage;
+    const path = `public/${decodeURI(src.substring(src.indexOf('assets')))}`;
+    const image = nativeImage.createFromPath(path);
+    clipboard.writeImage(image);
+    notification.success({ message: 'Image copied!', duration: 1.5 });
+  };
+
   return (
     <div
       ref={wrapperRef}
@@ -326,22 +320,7 @@ export const Section: React.FC<Props> = ({ section }) => {
         closeImagePanel(event);
       }}
       onDoubleClick={clickOnImage}
-      onAuxClick={(event) => {
-        const target = event.target as HTMLElement;
-        if (target.tagName === 'IMG') {
-          const recentImage = imageSelection(contentRef.current as Node, target);
-          setRecentImageNote(recentImage);
-          setPanelPosition(
-            getAbsolutePanelPosistion(
-              wrapperRef.current as HTMLDivElement,
-              imagePanelRef.current as HTMLDivElement,
-              event.nativeEvent,
-              window
-            )
-          );
-          setshowImagePanel(true);
-        }
-      }}>
+      onAuxClick={onRightClickImage}>
       <ColorPanel
         panelPosition={panelPosition}
         panelRef={panelRef}
@@ -363,13 +342,7 @@ export const Section: React.FC<Props> = ({ section }) => {
         footer={null}
         onCancel={() => setZoomInImage({ src: '', show: false })}>
         <img
-          onDoubleClick={() => {
-            const { src } = zoomInImage;
-            const path = `public/${decodeURI(src.substring(src.indexOf('assets')))}`;
-            const image = nativeImage.createFromPath(path);
-            clipboard.writeImage(image);
-            notification.success({ message: 'Image copied!', duration: 1.5 });
-          }}
+          onDoubleClick={onDoubleClickImage}
           style={{ marginTop: '1rem' }}
           src={zoomInImage.src}
           alt=""
