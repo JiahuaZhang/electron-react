@@ -53,9 +53,14 @@ export const highlightNote = (document: Document, note: NoteSelection, parent: N
 export const getContent = (document: Document, note: NoteSelection, parent: Node): Notes => {
   if (isTextSelection(note)) {
     const range = getRange(document, note, parent);
-    return { text: range?.toString(), backgroundColor: note.color };
+    return { type: 'text', text: range?.toString(), backgroundColor: note.color };
   }
-  return {};
+
+  if (isImageSelection(note)) {
+    return { type: 'image', src: note.src };
+  }
+
+  throw Error('invalid note selection type');
 };
 
 export const isNoteClickInside = (parent: Node, target: Node, note: NoteSelection) => {

@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Modal, notification } from 'antd';
 
-import { manifest } from './model/book.type';
-import { BookContext } from './bookContext';
-import { BookDataContext } from './Data/bookDataContext';
-import { BookDataType } from './Data/bookDataHook';
-import { NotesContext, NotesType } from './Panel/Notes/NotesHook';
+import { manifest } from '../model/book.type';
+import { BookContext } from '../bookContext';
+import { BookDataContext } from '../Data/bookDataContext';
+import { BookDataType } from '../Data/bookDataHook';
+import { NotesContext, NotesType } from '../Panel/Notes/NotesHook';
 import {
   NoteSelection,
   compareNote,
   highlightNote,
   getContent,
   isNoteClickInside,
-} from './utils/note/note';
-import { TextSelection, textSelection, highlightSelection } from './utils/note/textSelection';
-import { ImageSelection, imageSelection } from './utils/note/imageSelection';
-import { ColorPanel } from './Section/ColorPanel';
-import { ImagePanel } from './Section/ImagePanel';
-import { transformHtml } from './utils/book';
+} from '../utils/note/note';
+import { TextSelection, textSelection, highlightSelection } from '../utils/note/textSelection';
+import { ImageSelection, imageSelection } from '../utils/note/imageSelection';
+import { ColorPanel } from './ColorPanel';
+import { ImagePanel } from './ImagePanel';
+import { transformHtml } from '../utils/book';
 
 const { nativeImage, clipboard } = window.require('electron');
 
@@ -289,7 +289,7 @@ export const Section: React.FC<Props> = ({ section }) => {
       return;
     }
 
-    const recentImage = imageSelection(contentRef.current as Node, target);
+    const recentImage = imageSelection(contentRef.current as Node, target as HTMLImageElement);
     setRecentImageNote(recentImage);
     setPanelPosition(
       getAbsolutePanelPosistion(

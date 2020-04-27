@@ -2,7 +2,7 @@ import React, { useContext, useRef } from 'react';
 import { Button, notification } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 
-import { NotesContext } from './NotesHook';
+import { NotesContext, Notes } from './NotesHook';
 import { ConfigContext } from '../../Configuration/configContext';
 import { default_english_fonts } from '../../model/epubConfig';
 
@@ -17,6 +17,21 @@ export const NotesPanel = (props: Props) => {
     .filter(Boolean)
     .concat(default_english_fonts)
     .join(',');
+
+  const renderContent = ({ type, src, text, backgroundColor }: Notes, index: number) => {
+    switch (type) {
+      case 'image':
+        return <img src={src} alt="" style={{ width: '100%' }} />;
+      case 'text':
+        return (
+          <p key={`${index}-${text}`} style={{ backgroundColor, margin: '.4rem auto' }}>
+            {text}
+          </p>
+        );
+      default:
+        return <></>;
+    }
+  };
 
   return (
     <div style={{ display: 'grid' }}>
@@ -40,11 +55,7 @@ export const NotesPanel = (props: Props) => {
         copy all
       </Button>
       <div ref={ref} style={{ fontFamily, fontSize: fontSize && fontSize * 0.8 }}>
-        {state.map(({ text, backgroundColor }, index) => (
-          <p key={`${index}-${text}`} style={{ backgroundColor, margin: '.4rem auto' }}>
-            {text}
-          </p>
-        ))}
+        {state.map(renderContent)}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import './Book.sass';
-import { Section } from './Section';
+import { Section } from './Section/Section';
 import { BookContext } from './bookContext';
 import { ConfigContext } from './Configuration/configContext';
 import { BookDataType } from './Data/bookDataHook';
@@ -26,22 +26,22 @@ export const Book: React.FC<Props> = () => {
       style={{ fontSize, fontFamily }}
       className="book"
       tabIndex={0}
-      onKeyDown={event => {
+      onKeyDown={(event) => {
         if (event.key === 'ArrowRight' && pageIndex + 1 < book.flow.length) {
           dispatch({
             type: BookDataType.update_page,
             payload: {
               page: book.flow[pageIndex + 1].href,
-              pageIndex: pageIndex + 1
-            }
+              pageIndex: pageIndex + 1,
+            },
           });
         } else if (event.key === 'ArrowLeft' && pageIndex - 1 >= 0) {
           dispatch({
             type: BookDataType.update_page,
             payload: {
               page: book.flow[pageIndex - 1].href,
-              pageIndex: pageIndex - 1
-            }
+              pageIndex: pageIndex - 1,
+            },
           });
         }
       }}>

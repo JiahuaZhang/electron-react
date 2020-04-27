@@ -44,7 +44,6 @@ export const ImagePanel = ({
           style={{ background: 'white', padding: '.5rem' }}>
           image
         </Checkbox>
-        )
       </div>
     </Affix>
   );

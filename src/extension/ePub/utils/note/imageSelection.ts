@@ -1,9 +1,10 @@
 export interface ImageSelection {
   kind: 'image';
   path: number[];
+  src: string;
 }
 
-export const imageSelection = (parent: Node, image: Node): ImageSelection => {
+export const imageSelection = (parent: Node, image: HTMLImageElement): ImageSelection => {
   let current = parent;
   const path: number[] = [];
   while (!current.isSameNode(image) && parent.contains(image)) {
@@ -16,7 +17,7 @@ export const imageSelection = (parent: Node, image: Node): ImageSelection => {
     }
   }
 
-  return { kind: 'image', path };
+  return { kind: 'image', path, src: image.src };
 };
 
 export const getImageNode = (imageSelection: ImageSelection, parent: Node) => {

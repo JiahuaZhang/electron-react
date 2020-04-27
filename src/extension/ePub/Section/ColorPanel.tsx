@@ -2,7 +2,7 @@ import React, { Dispatch, SetStateAction, RefObject } from 'react';
 import { Affix } from 'antd';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 
-import { TextSelectionWrapper } from '../Section';
+import { TextSelectionWrapper } from './Section';
 
 interface Props {
   panelPosition: { top: number; left: number };

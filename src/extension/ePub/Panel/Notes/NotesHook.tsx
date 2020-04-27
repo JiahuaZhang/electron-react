@@ -5,6 +5,8 @@ export enum NotesType {
 }
 
 export interface Notes {
+  type: 'text' | 'image';
+  src?: string;
   text?: string;
   backgroundColor?: string;
 }
