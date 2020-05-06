@@ -177,7 +177,7 @@ export const Section: React.FC<Props> = ({ section }) => {
       case 'update':
         highlightSelection(document, recentTextNote, content_ref);
         setNotes((values) => {
-          values = values.filter((value) => !compareNote(recentTextNote, value));
+          values = values.filter((value) => compareNote(recentTextNote, value));
           return [...values, recentTextNote];
         });
         break;

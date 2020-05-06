@@ -13,14 +13,7 @@ interface Props {
   setshowTextPanel: Dispatch<SetStateAction<boolean>>;
 }
 
-const default_highlight_colors = [
-  '#ffeb3b',
-  '#ff9800',
-  '#f72a1b',
-  '#a900ff5e',
-  '#03a9f466',
-  '#15ff1e',
-];
+const default_highlight_colors = ['#ffeb3b', '#ff9800', '#f72a1b', 'aqua', 'pink', '#15ff1e'];
 
 export const ColorPanel = ({
   panelPosition,
@@ -55,7 +48,11 @@ export const ColorPanel = ({
         {default_highlight_colors.map((color) => (
           <span
             onClick={(event) => {
-              setRecentTextNote((note) => ({ ...note, color }));
+              setRecentTextNote((note) => ({
+                ...note,
+                color,
+                status: note.status === 'chose' ? 'update' : note.status,
+              }));
               setshowTextPanel(false);
               setTimeout(() => document.getSelection()?.removeAllRanges(), 0);
             }}
