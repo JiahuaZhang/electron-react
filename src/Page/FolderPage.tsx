@@ -42,7 +42,7 @@ export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
             <Button
               onClick={() => removePanel(key)}
               icon={<CloseOutlined />}
-              type="danger"
+              danger
               shape="circle"
             />
           </div>
