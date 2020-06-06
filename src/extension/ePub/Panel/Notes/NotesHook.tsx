@@ -11,6 +11,9 @@ export interface Notes {
   backgroundColor?: string;
 }
 
+export const note2id = (note: Notes) =>
+  note.type === 'text' ? `${note.type}-${note.text}` : `${note.type}-${note.src}`;
+
 export interface NotesAction {
   type: NotesType;
   payload: Notes[];

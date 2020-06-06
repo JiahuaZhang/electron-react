@@ -3,7 +3,7 @@ import { Button, notification, Checkbox } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
-import { NotesContext, Notes } from './NotesHook';
+import { NotesContext, Notes, note2id } from './NotesHook';
 import { ConfigContext } from '../../Configuration/configContext';
 import { default_english_fonts } from '../../model/epubConfig';
 
@@ -15,7 +15,7 @@ export const NotesPanel = (props: Props) => {
   const { fontSize, chinese_font, english_font } = React.useContext(ConfigContext);
   const { state } = useContext(NotesContext);
   const ref = useRef<HTMLDivElement>(null);
-  const [noteStatus, setNoteStatus] = useState(new Map<Notes, boolean>());
+  const [noteStatus, setNoteStatus] = useState(new Map<string, boolean>());
   const [selectMode, setSelectMode] = useState({
     all: true,
     indeterminate: false,
@@ -28,13 +28,14 @@ export const NotesPanel = (props: Props) => {
 
   useEffect(() => {
     let need_update = false;
-    const new_note_status = state.map<[Notes, boolean]>((note) => {
-      if (!noteStatus.has(note)) {
+    const new_note_status = state.map<[string, boolean]>((note) => {
+      const id = note2id(note);
+      if (!noteStatus.has(id)) {
         need_update = true;
-        return [note, true];
+        return [id, true];
       }
 
-      return [note, noteStatus.get(note) as boolean];
+      return [id, noteStatus.get(id) as boolean];
     });
 
     if (need_update) {
@@ -59,7 +60,7 @@ export const NotesPanel = (props: Props) => {
 
   const renderCheckbox = (note: Notes, index: number) => {
     const onChange = (event: CheckboxChangeEvent) =>
-      setNoteStatus(new Map(noteStatus.set(note, event.target.checked)));
+      setNoteStatus(new Map(noteStatus.set(note2id(note), event.target.checked)));
 
     switch (note.type) {
       case 'image':
@@ -68,7 +69,7 @@ export const NotesPanel = (props: Props) => {
             key={`${index}-${note.src}`}
             onChange={onChange}
             style={{ marginLeft: 0, display: 'block' }}
-            checked={selectMode.indeterminate ? noteStatus.get(note) : selectMode.all}>
+            checked={selectMode.indeterminate ? noteStatus.get(note2id(note)) : selectMode.all}>
             <img src={note.src} alt="" style={{ width: '100%' }} />;
           </Checkbox>
         );
@@ -77,7 +78,7 @@ export const NotesPanel = (props: Props) => {
           <Checkbox
             key={`${index}-${note.text}`}
             onChange={onChange}
-            checked={selectMode.indeterminate ? noteStatus.get(note) : selectMode.all}
+            checked={selectMode.indeterminate ? noteStatus.get(note2id(note)) : selectMode.all}
             style={{ display: 'block', marginLeft: 0, backgroundColor: note.backgroundColor }}>
             {note.text}
           </Checkbox>
@@ -90,11 +91,11 @@ export const NotesPanel = (props: Props) => {
   const toggleSelectMode = () =>
     setSelectMode(({ all, indeterminate }) => {
       if (indeterminate) {
-        const new_status = state.map<[Notes, boolean]>((note) => [note, true]);
+        const new_status = state.map<[string, boolean]>((note) => [note2id(note), true]);
         setNoteStatus(new Map(new_status));
         return { all: true, indeterminate: false };
       } else {
-        const new_status = state.map<[Notes, boolean]>((note) => [note, !all]);
+        const new_status = state.map<[string, boolean]>((note) => [note2id(note), !all]);
         setNoteStatus(new Map(new_status));
         return { all: !all, indeterminate: false };
       }
@@ -131,7 +132,7 @@ export const NotesPanel = (props: Props) => {
 
     const div = document.createElement('div');
     for (const s of state) {
-      if (selectMode.indeterminate && !noteStatus.get(s)) {
+      if (selectMode.indeterminate && !noteStatus.get(note2id(s))) {
         continue;
       }
       div.appendChild(s.type === 'image' ? image(s) : paragraph(s));
