@@ -57,6 +57,12 @@ const App: React.FC = () => {
     };
   };
 
+  useEffect(() => {
+    setState([
+      { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(getController)]} /> },
+    ]);
+  }, []);
+
   const renderedContent = () => {
     const current = state.find(({ key }) => key === activeKey);
     return current ? current.content : null;
