@@ -1,18 +1,23 @@
 import React, { useContext, useRef, useEffect, useState } from 'react';
 import { Button, notification, Checkbox } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 import { NotesContext, Notes, note2id } from './NotesHook';
 import { ConfigContext } from '../../Configuration/configContext';
 import { default_english_fonts } from '../../model/epubConfig';
+import { BookContext } from '../../bookContext';
+import { BookDataContext } from '../../Data/bookDataContext';
+import { BookDataType } from '../../Data/bookDataHook';
 
 const { clipboard } = window.require('electron');
 
 interface Props {}
 
 export const NotesPanel = (props: Props) => {
-  const { fontSize, chinese_font, english_font } = React.useContext(ConfigContext);
+  const book = useContext(BookContext);
+  const bookData = useContext(BookDataContext);
+  const { fontSize, chinese_font, english_font } = useContext(ConfigContext);
   const { state } = useContext(NotesContext);
   const ref = useRef<HTMLDivElement>(null);
   const [noteStatus, setNoteStatus] = useState(new Map<string, boolean>());
@@ -20,6 +25,7 @@ export const NotesPanel = (props: Props) => {
     all: true,
     indeterminate: false,
   });
+  const section = book.flow[bookData.state.pageIndex];
 
   const fontFamily = [english_font, chinese_font]
     .filter(Boolean)
@@ -144,25 +150,42 @@ export const NotesPanel = (props: Props) => {
 
   return (
     <div style={{ display: 'grid' }}>
-      <Checkbox
+      <header
         style={{
           display: 'grid',
-          justifyContent: 'center',
+          justifyContent: 'end',
           alignItems: 'center',
-          gridTemplateColumns: 'repeat(2, max-content)',
-          margin: '.25rem 0',
-        }}
-        onChange={toggleSelectMode}
-        indeterminate={selectMode.indeterminate}
-        checked={selectMode.all}>
+          gridTemplateColumns: '1fr repeat(2, max-content)',
+          margin: '.25rem .5rem',
+          gap: '.5rem',
+        }}>
+        <Checkbox
+          onChange={toggleSelectMode}
+          indeterminate={selectMode.indeterminate}
+          checked={selectMode.all}></Checkbox>
         <Button onClick={copyNotes}>
-          <CopyOutlined />
-          copy
+          <CopyOutlined style={{ color: '#3f51b5' }} />
         </Button>
-      </Checkbox>
-      <div ref={ref} style={{ fontFamily, fontSize: fontSize && fontSize * 0.8 }}>
+        <Button
+          onClick={() => {
+            const foundSection = bookData.state.sections.find((value) => value.id === section.id);
+            if (!foundSection) {
+              return;
+            }
+
+            if (selectMode.all) {
+              bookData.dispatch({
+                type: BookDataType.update_notes,
+                payload: { id: section.id, notes: [] },
+              });
+            }
+          }}>
+          <DeleteOutlined style={{ color: 'red' }} />
+        </Button>
+      </header>
+      <section ref={ref} style={{ fontFamily, fontSize: fontSize && fontSize * 0.8 }}>
         {state.map(renderCheckbox)}
-      </div>
+      </section>
     </div>
   );
 };

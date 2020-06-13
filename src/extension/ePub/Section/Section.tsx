@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Modal, notification } from 'antd';
 
-import { manifest } from '../model/book.type';
 import { BookContext } from '../bookContext';
 import { BookDataContext } from '../Data/bookDataContext';
 import { BookDataType } from '../Data/bookDataHook';
@@ -21,9 +20,7 @@ import { transformHtml } from '../utils/book';
 
 const { nativeImage, clipboard } = window.require('electron');
 
-interface Props {
-  section: manifest;
-}
+interface Props {}
 
 export interface TextSelectionWrapper extends TextSelection {
   status?: 'add' | 'update' | 'delete' | 'chose';
@@ -60,7 +57,7 @@ const getAbsolutePanelPosistion = (
   return { left, top };
 };
 
-export const Section: React.FC<Props> = ({ section }) => {
+export const Section: React.FC<Props> = () => {
   const book = useContext(BookContext);
   const { dispatch, state } = React.useContext(BookDataContext);
   const { dispatch: notesDispatch } = React.useContext(NotesContext);
@@ -78,6 +75,8 @@ export const Section: React.FC<Props> = ({ section }) => {
   const [hasInitHighlights, setHasInitHighlights] = useState(false);
   const [zoomInImage, setZoomInImage] = useState({ src: '', show: false });
   const [recentImageNote, setRecentImageNote] = useState({} as ImageSelection);
+
+  const section = book.flow[state.pageIndex];
 
   useEffect(() => {
     if (!book) {
@@ -151,10 +150,10 @@ export const Section: React.FC<Props> = ({ section }) => {
     setHasInitHighlights(true);
   }, [state.sections, section.id, notes, html, hasInitHighlights]);
 
-  useEffect(
-    () => () => dispatch({ type: BookDataType.update_notes, payload: { id: section.id, notes } }),
-    [notes, dispatch, section.id]
-  );
+  useEffect(() => {
+    if (!hasInitHighlights) return;
+    dispatch({ type: BookDataType.update_notes, payload: { id: section.id, notes } });
+  }, [notes, dispatch, section.id, hasInitHighlights]);
 
   useEffect(() => {
     if (!recentTextNote.color) {
@@ -183,14 +182,8 @@ export const Section: React.FC<Props> = ({ section }) => {
         break;
 
       case 'delete':
-        setNotes((values) =>
-          values.reduce<NoteSelection[]>((accumulator, current) => {
-            if (compareNote(recentTextNote, current) === 0) {
-              return [...accumulator, { ...current, color: 'white' }];
-            }
-            return [...accumulator, current];
-          }, [])
-        );
+        highlightSelection(document, { ...recentTextNote, color: 'white' }, content_ref);
+        setNotes((values) => values.filter((value) => compareNote(recentTextNote, value) !== 0));
         setRefresh(true);
         break;
 

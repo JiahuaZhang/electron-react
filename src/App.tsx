@@ -37,36 +37,25 @@ const App: React.FC = () => {
     const currentId = id.current;
     return {
       render: (content: JSX.Element, title?: string) => {
-        setState(prev_state => {
+        setState((prev_state) => {
           setActiveKey(currentId);
           id.current++;
           return prev_state.concat({
             title,
             content,
             key: currentId,
-            type: 'book'
+            type: 'book',
           });
         });
       },
       discard: () => {
         setActiveKey(-1);
-        setState(prevState => {
+        setState((prevState) => {
           return prevState.filter(({ key }) => key !== currentId);
         });
-      }
+      },
     };
   };
-
-  useEffect(() => {
-    setState([
-      { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(getController)]} /> }
-    ]);
-    ePub(getController).processor(
-      '/Users/jzhang016/Documents/Books/模仿的技术：企业如何从“山寨”到创新-井上达彦.epub'
-      // '/Users/jzhang016/Documents/Books/创新者的方法-内森•弗尔 & 杰夫·戴尔.epub'
-      // '/Users/jzhang016/Documents/Books/阿里铁军销售课-李立恒.epub'
-    );
-  }, []);
 
   const renderedContent = () => {
     const current = state.find(({ key }) => key === activeKey);
@@ -79,7 +68,7 @@ const App: React.FC = () => {
         width: '100vw',
         height: '100vh',
         display: 'grid',
-        gridTemplateColumns: 'max-content 1fr'
+        gridTemplateColumns: 'max-content 1fr',
       }}>
       <Sider theme="light" collapsible defaultCollapsed>
         <Menu selectedKeys={[activeKey.toString()]}>

@@ -13,20 +13,21 @@ export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
   const [state, setState] = useState([
     {
       key: -1,
-      content: <Files directory="/Users/jzhang016/Documents/Books" fileHandlers={fileHandlers} />
-    }
+      content: <Files fileHandlers={fileHandlers} />,
+    },
   ]);
   const key = useRef(0);
 
   const newFolderPanel = () =>
-    setState(prev =>
+    setState((prev) =>
       prev.concat({
         key: key.current++,
-        content: <Files fileHandlers={fileHandlers} />
+        content: <Files fileHandlers={fileHandlers} />,
       })
     );
 
-  const removePanel = (key: number) => setState(prevState => prevState.filter(s => s.key !== key));
+  const removePanel = (key: number) =>
+    setState((prevState) => prevState.filter((s) => s.key !== key));
 
   return (
     <Row>
@@ -37,7 +38,7 @@ export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
               background: '#75ff8133',
               display: 'grid',
               justifyItems: 'end',
-              padding: '.5rem 1rem'
+              padding: '.5rem 1rem',
             }}>
             <Button
               onClick={() => removePanel(key)}

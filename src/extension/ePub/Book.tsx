@@ -45,7 +45,7 @@ export const Book: React.FC<Props> = () => {
           });
         }
       }}>
-      <Section section={book.flow[pageIndex]} key={book.flow[pageIndex].id} />
+      <Section key={book.flow[pageIndex].id} />
     </div>
   );
 };

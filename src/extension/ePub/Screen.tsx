@@ -6,7 +6,7 @@ import {
   MenuOutlined,
   CloseCircleFilled,
   SettingOutlined,
-  ProfileOutlined
+  ProfileOutlined,
 } from '@ant-design/icons';
 
 import './Screen.sass';
@@ -70,7 +70,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
         display: 'grid',
         gridTemplateRows: 'max-content 1fr',
         minHeight: 0,
-        minWidth: 0
+        minWidth: 0,
       }}>
       <Header>
         <Menu mode="horizontal" selectedKeys={selectedKeys} style={{ display: 'flex' }}>
@@ -105,7 +105,7 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
           style={{
             overflow: 'auto',
             display: 'grid',
-            gridTemplateColumns: 'max-content 1fr'
+            gridTemplateColumns: 'max-content 1fr',
           }}>
           <div
             style={{ width: showPanel ? '7px' : 0 }}
@@ -113,10 +113,10 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
             onMouseDown={() => {
               changingSiderWidth.current = fromEvent<MouseEvent>(document, 'mousemove')
                 .pipe<MouseEvent, MouseEvent>(
-                  tap(event => event.preventDefault()),
+                  tap((event) => event.preventDefault()),
                   throttleTime<MouseEvent>(100)
                 )
-                .subscribe(event => {
+                .subscribe((event) => {
                   if (!sider.current) {
                     return;
                   }
