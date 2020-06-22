@@ -10,21 +10,21 @@ import { controller } from './extension/ePub/model/epub';
 
 const { Sider } = Layout;
 
-if (process.env.NODE_ENV !== 'production') {
-  const whyDidYouRender = require('@welldone-software/why-did-you-render');
-  whyDidYouRender(React, {
-    include: [
-      /Screen/,
-      /Book/,
-      /Section/,
-      /TableOfContents/,
-      /ConfigPanel/,
-      /FontFamily/,
-      /FontSizeConfig/,
-      /App/
-    ]
-  });
-}
+// if (process.env.NODE_ENV !== 'production') {
+//   const whyDidYouRender = require('@welldone-software/why-did-you-render');
+//   whyDidYouRender(React, {
+//     include: [
+//       /Screen/,
+//       /Book/,
+//       /Section/,
+//       /TableOfContents/,
+//       /ConfigPanel/,
+//       /FontFamily/,
+//       /FontSizeConfig/,
+//       /App/
+//     ]
+//   });
+// }
 
 const App: React.FC = () => {
   const [state, setState] = useState<
@@ -56,6 +56,13 @@ const App: React.FC = () => {
       },
     };
   };
+
+  useEffect(() => {
+    setState([
+      { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(getController)]} /> },
+    ]);
+    ePub(getController).processor('/Users/jzhang016/Documents/Books/毛泽东选集-毛泽东.epub');
+  }, []);
 
   const renderedContent = () => {
     const current = state.find(({ key }) => key === activeKey);

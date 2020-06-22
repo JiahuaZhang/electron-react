@@ -4,13 +4,12 @@ import { Modal, notification } from 'antd';
 import { BookContext } from '../bookContext';
 import { BookDataContext } from '../Data/bookDataContext';
 import { BookDataType } from '../Data/bookDataHook';
-import { NotesContext, NotesType } from '../Panel/Notes/NotesHook';
 import {
   NoteSelection,
   compareNote,
   highlightNote,
-  getContent,
   isNoteClickInside,
+  isTextSelection,
 } from '../utils/note/note';
 import { TextSelection, textSelection, highlightSelection } from '../utils/note/textSelection';
 import { ImageSelection, imageSelection } from '../utils/note/imageSelection';
@@ -59,8 +58,8 @@ const getAbsolutePanelPosistion = (
 
 export const Section: React.FC<Props> = () => {
   const book = useContext(BookContext);
-  const { dispatch, state } = React.useContext(BookDataContext);
-  const { dispatch: notesDispatch } = React.useContext(NotesContext);
+  const { dispatch, state } = useContext(BookDataContext);
+  const [htmlSource, setHtmlSource] = useState('');
   const [html, setHtml] = useState(<></>);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -69,14 +68,14 @@ export const Section: React.FC<Props> = () => {
   const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0 });
   const [showTextPanel, setshowTextPanel] = useState(false);
   const [showImagePanel, setshowImagePanel] = useState(false);
-  const [notes, setNotes] = useState<NoteSelection[]>([]);
   const [recentTextNote, setRecentTextNote] = useState({} as TextSelectionWrapper);
-  const [refresh, setRefresh] = useState(false);
-  const [hasInitHighlights, setHasInitHighlights] = useState(false);
+  const [hasLoadedNotes, setHasLoadedNotes] = useState(false);
   const [zoomInImage, setZoomInImage] = useState({ src: '', show: false });
   const [recentImageNote, setRecentImageNote] = useState({} as ImageSelection);
+  const cachedNotes = useRef<NoteSelection[]>([]);
 
   const section = book.flow[state.pageIndex];
+  const notes = state.sections.find(({ id }) => id === section.id)?.notes || [];
 
   useEffect(() => {
     if (!book) {
@@ -90,10 +89,17 @@ export const Section: React.FC<Props> = () => {
       }
 
       const html = (await transformHtml(book, text)) as string;
-
-      setHtml(<div dangerouslySetInnerHTML={{ __html: html }}></div>);
+      setHtmlSource(html);
     });
   }, [section, book]);
+
+  useEffect(() => {
+    if (!htmlSource || html.type === 'div') {
+      return;
+    }
+
+    setHtml(<div dangerouslySetInnerHTML={{ __html: htmlSource }} />);
+  }, [html, htmlSource]);
 
   useEffect(() => {
     const onSelectStart = (event: Event) => {
@@ -138,22 +144,61 @@ export const Section: React.FC<Props> = () => {
   }, []);
 
   useEffect(() => {
-    if (hasInitHighlights || !html.props['dangerouslySetInnerHTML']) {
-      return;
+    if (hasLoadedNotes || !html.props['dangerouslySetInnerHTML']) return;
+
+    const content_ref = contentRef.current as HTMLDivElement;
+    if (!content_ref) return;
+
+    for (const note of notes) {
+      highlightNote(document, note, content_ref);
     }
 
-    const result = state.sections.find(({ id }) => id === section.id);
-    if (result?.notes?.length) {
-      setNotes(result.notes);
-      setRefresh(true);
-    }
-    setHasInitHighlights(true);
-  }, [state.sections, section.id, notes, html, hasInitHighlights]);
+    document.getSelection()?.removeAllRanges();
+    cachedNotes.current = notes;
+    setHasLoadedNotes(true);
+  }, [html, notes, hasLoadedNotes]);
 
   useEffect(() => {
-    if (!hasInitHighlights) return;
-    dispatch({ type: BookDataType.update_notes, payload: { id: section.id, notes } });
-  }, [notes, dispatch, section.id, hasInitHighlights]);
+    if (!hasLoadedNotes) return;
+
+    switch (recentTextNote.status) {
+      case 'chose':
+        break;
+
+      case 'add':
+        if (cachedNotes.current.length === notes.length + 1) {
+          cachedNotes.current = notes;
+          setRecentTextNote({} as TextSelectionWrapper);
+        }
+        break;
+
+      case 'update':
+        if (cachedNotes.current !== notes && cachedNotes.current.length === notes.length) {
+          cachedNotes.current = notes;
+          setRecentTextNote({} as TextSelectionWrapper);
+        }
+        break;
+
+      default:
+        const cacheTextNotes = cachedNotes.current.filter(isTextSelection);
+        const currentTextNotes = notes.filter(isTextSelection);
+        let isSame = cacheTextNotes.length === currentTextNotes.length;
+        if (isSame) {
+          for (let index = 0; index < cacheTextNotes.length; ++index) {
+            if (compareNote(cacheTextNotes[index], currentTextNotes[index])) {
+              isSame = false;
+              break;
+            }
+          }
+        }
+        if (isSame) return;
+
+        setRecentTextNote({} as TextSelectionWrapper);
+        setHtml(<></>);
+        setHasLoadedNotes(false);
+        break;
+    }
+  }, [hasLoadedNotes, notes, recentTextNote, htmlSource]);
 
   useEffect(() => {
     if (!recentTextNote.color) {
@@ -170,48 +215,40 @@ export const Section: React.FC<Props> = () => {
 
       case 'add':
         highlightSelection(document, recentTextNote, content_ref);
-        setNotes((values) => [...values, recentTextNote]);
+        dispatch({
+          type: BookDataType.update_notes,
+          payload: { id: section.id, notes: [...notes, recentTextNote] },
+        });
+        setRecentTextNote((note) => ({ ...note, color: '' }));
         break;
 
       case 'update':
         highlightSelection(document, recentTextNote, content_ref);
-        setNotes((values) => {
-          values = values.filter((value) => compareNote(recentTextNote, value));
-          return [...values, recentTextNote];
+        dispatch({
+          type: BookDataType.update_notes,
+          payload: {
+            id: section.id,
+            notes: notes.map((note) => (compareNote(note, recentTextNote) ? note : recentTextNote)),
+          },
         });
+        setRecentTextNote((note) => ({ ...note, color: '' }));
         break;
 
       case 'delete':
-        highlightSelection(document, { ...recentTextNote, color: 'white' }, content_ref);
-        setNotes((values) => values.filter((value) => compareNote(recentTextNote, value) !== 0));
-        setRefresh(true);
+        dispatch({
+          type: BookDataType.update_notes,
+          payload: {
+            id: section.id,
+            notes: notes.filter((note) => compareNote(note, recentTextNote)),
+          },
+        });
+        setRecentTextNote((note) => ({ ...note, color: '' }));
         break;
 
       default:
         break;
     }
-  }, [recentTextNote]);
-
-  useEffect(() => {
-    if (refresh) {
-      const content_ref = contentRef.current as HTMLDivElement;
-      if (!content_ref) return;
-      for (const note of notes) {
-        highlightNote(document, note, content_ref);
-      }
-      document.getSelection()?.removeAllRanges();
-      setNotes((values) =>
-        values.filter((note) => note.kind === 'image' || note.color !== 'white')
-      );
-    }
-    setRefresh(false);
-  }, [refresh, notes]);
-
-  useEffect(() => {
-    const content_ref = contentRef.current as HTMLDivElement;
-    const payload = notes.sort(compareNote).map((note) => getContent(document, note, content_ref));
-    notesDispatch({ type: NotesType.persist, payload });
-  }, [notes, notesDispatch]);
+  }, [notes, section.id, dispatch, recentTextNote]);
 
   const closeShowPanel = (event: React.MouseEvent) => {
     if (!showTextPanel) {
@@ -327,7 +364,6 @@ export const Section: React.FC<Props> = () => {
         notes={notes}
         panelPosition={panelPosition}
         recentImageNote={recentImageNote}
-        setNotes={setNotes}
         showImagePanel={showImagePanel}
       />
       <Modal

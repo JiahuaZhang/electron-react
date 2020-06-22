@@ -1,8 +1,7 @@
 {
   "style": {
-    "fontSize": 26,
+    "fontSize": 28,
     "fontFamily": {
-      "english": "",
       "chinese": "方正楷体"
     }
   },
