@@ -7,8 +7,6 @@ import {
   isClickInside,
 } from './textSelection';
 
-import { Notes } from '../../Panel/Notes/NotesHook';
-
 export type NoteSelection = TextSelection | ImageSelection;
 
 export const isTextSelection = (selection: NoteSelection): selection is TextSelection =>
@@ -16,6 +14,30 @@ export const isTextSelection = (selection: NoteSelection): selection is TextSele
 
 export const isImageSelection = (selection: NoteSelection): selection is ImageSelection =>
   selection.kind === 'image';
+
+export const note2key = (selection: NoteSelection) => {
+  switch (selection.kind) {
+    case 'text':
+      const {
+        path_to_start_container,
+        path_to_end_container,
+        start_offset,
+        end_offset,
+      } = selection;
+      return [
+        'text',
+        path_to_start_container.join(','),
+        path_to_end_container.join(','),
+        start_offset,
+        end_offset,
+      ].join('-');
+    case 'image':
+      const { path } = selection;
+      return ['image', path.join(',')].join('-');
+    default:
+      return '';
+  }
+};
 
 const textSelectionCompareImageSelection = (a: TextSelection, b: ImageSelection) => {
   const length = Math.min(a.path_to_start_container.length, b.path.length);
@@ -50,14 +72,10 @@ export const highlightNote = (document: Document, note: NoteSelection, parent: N
   }
 };
 
-export const getContent = (document: Document, note: NoteSelection, parent: Node): Notes => {
+export const getContent = (document: Document, note: NoteSelection, parent: Node) => {
   if (isTextSelection(note)) {
     const range = getRange(document, note, parent);
-    return { type: 'text', text: range?.toString(), backgroundColor: note.color };
-  }
-
-  if (isImageSelection(note)) {
-    return { type: 'image', src: note.src };
+    return range?.cloneContents();
   }
 
   throw Error('invalid note selection type');

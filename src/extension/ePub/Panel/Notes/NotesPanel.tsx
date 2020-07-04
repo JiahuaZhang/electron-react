@@ -1,31 +1,32 @@
-import React, { useContext, useRef, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Button, notification, Checkbox } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
-import { NotesContext, Notes, note2id } from './NotesHook';
 import { ConfigContext } from '../../Configuration/configContext';
 import { default_english_fonts } from '../../model/epubConfig';
-import { BookContext } from '../../bookContext';
 import { BookDataContext } from '../../Data/bookDataContext';
 import { BookDataType } from '../../Data/bookDataHook';
+import { NoteContext, SideNote } from './NotesHook';
+import { NoteSelection, note2key } from '../../utils/note/note';
 
 const { clipboard } = window.require('electron');
 
 interface Props {}
 
+interface Status {
+  [key: string]: boolean;
+}
+
 export const NotesPanel = (props: Props) => {
-  const book = useContext(BookContext);
   const bookData = useContext(BookDataContext);
   const { fontSize, chinese_font, english_font } = useContext(ConfigContext);
-  const { state } = useContext(NotesContext);
-  const ref = useRef<HTMLDivElement>(null);
-  const [noteStatus, setNoteStatus] = useState(new Map<string, boolean>());
   const [selectMode, setSelectMode] = useState({
     all: true,
     indeterminate: false,
   });
-  const section = book.flow[bookData.state.pageIndex];
+  const { section, sideNotes } = useContext(NoteContext);
+  const [noteStatus, setNoteStatus] = useState<Status>({});
 
   const fontFamily = [english_font, chinese_font]
     .filter(Boolean)
@@ -33,60 +34,90 @@ export const NotesPanel = (props: Props) => {
     .join(',');
 
   useEffect(() => {
-    let need_update = false;
-    const new_note_status = state.map<[string, boolean]>((note) => {
-      const id = note2id(note);
-      if (!noteStatus.has(id)) {
-        need_update = true;
-        return [id, true];
+    const newStatus: Status = {};
+
+    let needUpdate = false;
+    for (const note of sideNotes) {
+      const key = note2key(note as NoteSelection);
+      if (key in noteStatus) {
+        newStatus[key] = noteStatus[key];
+      } else {
+        needUpdate = true;
+        newStatus[key] = true;
       }
-
-      return [id, noteStatus.get(id) as boolean];
-    });
-
-    if (need_update) {
-      setNoteStatus(new Map(new_note_status));
     }
-  }, [state, noteStatus]);
+
+    if (needUpdate) setNoteStatus(newStatus);
+  }, [noteStatus, sideNotes]);
 
   useEffect(() => {
-    let mode = { all: true, indeterminate: false };
+    let mode = { all: false, indeterminate: false };
 
     const status = new Set<boolean>();
-    noteStatus.forEach((note) => status.add(note));
+    Object.values(noteStatus).forEach((val) => status.add(val));
 
     if (status.size === 2) {
       mode.indeterminate = true;
-    } else if (status.has(false)) {
-      mode.all = false;
+    } else if (status.has(true)) {
+      mode.all = true;
     }
 
     setSelectMode(mode);
   }, [noteStatus]);
 
-  const renderCheckbox = (note: Notes, index: number) => {
+  const renderCheckbox = (note: SideNote) => {
     const onChange = (event: CheckboxChangeEvent) =>
-      setNoteStatus(new Map(noteStatus.set(note2id(note), event.target.checked)));
+      setNoteStatus((status) => {
+        const new_status = { ...status };
+        const key = note2key(note as NoteSelection);
+        new_status[key] = !status[key];
+        return new_status;
+      });
 
-    switch (note.type) {
+    switch (note.kind) {
       case 'image':
         return (
           <Checkbox
-            key={`${index}-${note.src}`}
+            key={note2key(note as NoteSelection)}
             onChange={onChange}
-            style={{ marginLeft: 0, display: 'block' }}
-            checked={selectMode.indeterminate ? noteStatus.get(note2id(note)) : selectMode.all}>
-            <img src={note.src} alt="" style={{ width: '100%' }} />;
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'max-content 1fr',
+              alignItems: 'center',
+              margin: 0,
+              padding: '.5rem 0',
+              borderTop: '1px solid #ffc107',
+            }}
+            checked={
+              selectMode.indeterminate
+                ? noteStatus[note2key(note as NoteSelection)]
+                : selectMode.all
+            }>
+            <img src={note.src} alt="" style={{ width: '100%' }} />
           </Checkbox>
         );
       case 'text':
         return (
           <Checkbox
-            key={`${index}-${note.text}`}
+            key={note2key(note as NoteSelection)}
             onChange={onChange}
-            checked={selectMode.indeterminate ? noteStatus.get(note2id(note)) : selectMode.all}
-            style={{ display: 'block', marginLeft: 0, backgroundColor: note.backgroundColor }}>
-            {note.text}
+            checked={
+              selectMode.indeterminate
+                ? noteStatus[note2key(note as NoteSelection)]
+                : selectMode.all
+            }
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'max-content 1fr',
+              alignItems: 'center',
+              margin: 0,
+              padding: '.5rem 0',
+              borderTop: '1px solid #ffc107',
+            }}>
+            <span
+              style={{ whiteSpace: 'pre-wrap', backgroundColor: note.color }}
+              dangerouslySetInnerHTML={{ __html: note.text as string }}
+            />
           </Checkbox>
         );
       default:
@@ -97,12 +128,22 @@ export const NotesPanel = (props: Props) => {
   const toggleSelectMode = () =>
     setSelectMode(({ all, indeterminate }) => {
       if (indeterminate) {
-        const new_status = state.map<[string, boolean]>((note) => [note2id(note), true]);
-        setNoteStatus(new Map(new_status));
+        setNoteStatus((status) => {
+          const new_status = { ...status };
+          for (const key in new_status) {
+            new_status[key] = true;
+          }
+          return new_status;
+        });
         return { all: true, indeterminate: false };
       } else {
-        const new_status = state.map<[string, boolean]>((note) => [note2id(note), !all]);
-        setNoteStatus(new Map(new_status));
+        setNoteStatus((status) => {
+          const new_status = { ...status };
+          for (const key in new_status) {
+            new_status[key] = !all;
+          }
+          return new_status;
+        });
         return { all: !all, indeterminate: false };
       }
     });
@@ -112,14 +153,15 @@ export const NotesPanel = (props: Props) => {
       return notification.error({ message: 'nothing selected to copy', duration: 1.5 });
     }
 
-    const paragraph = (note: Notes) => {
+    const paragraph = (note: SideNote) => {
       const p = document.createElement('p');
-      p.textContent = note.text as string;
-      p.style.backgroundColor = note.backgroundColor as string;
+      p.innerHTML = note.text?.replace(/\n/g, '<br/>') as string;
+      p.style.whiteSpace = 'pre-wrap';
+      p.style.backgroundColor = note.color as string;
       return p;
     };
 
-    const image = (note: Notes) => {
+    const image = (note: SideNote) => {
       const i = document.createElement('img');
       i.src = note.src as string;
       i.src = getBase64Image(i);
@@ -137,11 +179,11 @@ export const NotesPanel = (props: Props) => {
     };
 
     const div = document.createElement('div');
-    for (const s of state) {
-      if (selectMode.indeterminate && !noteStatus.get(note2id(s))) {
+    for (const s of sideNotes) {
+      if (selectMode.indeterminate && !noteStatus[note2key(s as NoteSelection)]) {
         continue;
       }
-      div.appendChild(s.type === 'image' ? image(s) : paragraph(s));
+      div.appendChild(s.kind === 'image' ? image(s) : paragraph(s));
     }
 
     clipboard.writeHTML(div.outerHTML);
@@ -168,23 +210,32 @@ export const NotesPanel = (props: Props) => {
         </Button>
         <Button
           onClick={() => {
-            const foundSection = bookData.state.sections.find((value) => value.id === section.id);
-            if (!foundSection) {
-              return;
+            if (!selectMode.indeterminate && !selectMode.all) {
+              return notification.error({ message: 'nothing selected to delete', duration: 1.5 });
             }
 
+            console.log(selectMode);
             if (selectMode.all) {
               bookData.dispatch({
                 type: BookDataType.update_notes,
                 payload: { id: section.id, notes: [] },
               });
+              return;
             }
+
+            const notes = sideNotes.filter(
+              (note) => !noteStatus[note2key(note as NoteSelection)]
+            ) as NoteSelection[];
+            bookData.dispatch({
+              type: BookDataType.update_notes,
+              payload: { id: section.id, notes },
+            });
           }}>
           <DeleteOutlined style={{ color: 'red' }} />
         </Button>
       </header>
-      <section ref={ref} style={{ fontFamily, fontSize: fontSize && fontSize * 0.8 }}>
-        {state.map(renderCheckbox)}
+      <section style={{ fontFamily, fontSize: fontSize && fontSize * 0.8 }}>
+        {sideNotes.map(renderCheckbox)}
       </section>
     </div>
   );

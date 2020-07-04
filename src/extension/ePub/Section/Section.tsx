@@ -10,12 +10,14 @@ import {
   highlightNote,
   isNoteClickInside,
   isTextSelection,
+  getContent,
 } from '../utils/note/note';
 import { TextSelection, textSelection, highlightSelection } from '../utils/note/textSelection';
 import { ImageSelection, imageSelection } from '../utils/note/imageSelection';
 import { ColorPanel } from './ColorPanel';
 import { ImagePanel } from './ImagePanel';
 import { transformHtml } from '../utils/book';
+import { NoteContext, SideNote } from '../Panel/Notes/NotesHook';
 
 const { nativeImage, clipboard } = window.require('electron');
 
@@ -58,7 +60,8 @@ const getAbsolutePanelPosistion = (
 
 export const Section: React.FC<Props> = () => {
   const book = useContext(BookContext);
-  const { dispatch, state } = useContext(BookDataContext);
+  const { dispatch } = useContext(BookDataContext);
+  const { section, notes, setSideNotes } = useContext(NoteContext);
   const [htmlSource, setHtmlSource] = useState('');
   const [html, setHtml] = useState(<></>);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -74,9 +77,6 @@ export const Section: React.FC<Props> = () => {
   const [recentImageNote, setRecentImageNote] = useState({} as ImageSelection);
   const cachedNotes = useRef<NoteSelection[]>([]);
 
-  const section = book.flow[state.pageIndex];
-  const notes = state.sections.find(({ id }) => id === section.id)?.notes || [];
-
   useEffect(() => {
     if (!book) {
       return;
@@ -91,7 +91,7 @@ export const Section: React.FC<Props> = () => {
       const html = (await transformHtml(book, text)) as string;
       setHtmlSource(html);
     });
-  }, [section, book]);
+  }, [section.id, book]);
 
   useEffect(() => {
     if (!htmlSource || html.type === 'div') {
@@ -249,6 +249,20 @@ export const Section: React.FC<Props> = () => {
         break;
     }
   }, [notes, section.id, dispatch, recentTextNote]);
+
+  useEffect(() => {
+    if (!hasLoadedNotes) return;
+
+    const sortedNotes = notes.sort(compareNote);
+    const sideNotes = sortedNotes.map<SideNote>((note) => {
+      const value: SideNote = { ...note };
+      if (value.kind === 'text') {
+        value.text = getContent(document, note, contentRef.current as Node)?.textContent as string;
+      }
+      return value;
+    });
+    setSideNotes(sideNotes);
+  }, [notes, setSideNotes, hasLoadedNotes]);
 
   const closeShowPanel = (event: React.MouseEvent) => {
     if (!showTextPanel) {
