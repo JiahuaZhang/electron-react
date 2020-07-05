@@ -31,7 +31,7 @@ interface Props {
 
 export const Screen: React.FC<Props> = ({ book, discard }) => {
   const [activePanel, setActivePanel] = useState('notes');
-  const [showPanel, setShowPanel] = useState(true);
+  const [showPanel, setShowPanel] = useState(false);
   const sider = useRef<HTMLDivElement>(null);
   const [selectedKeys, setSelectedKeys] = useState(['']);
   const [siderWidth, setSiderWidth] = useState(200);
