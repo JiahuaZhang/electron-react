@@ -1,7 +1,11 @@
-import React, { RefObject, Dispatch, SetStateAction } from 'react';
+import React, { RefObject, useContext } from 'react';
 import { Affix, Checkbox } from 'antd';
+
 import { ImageSelection } from '../utils/note/imageSelection';
 import { NoteSelection, compareNote } from '../utils/note/note';
+import { BookDataContext } from '../Data/bookDataContext';
+import { BookContext } from '../bookContext';
+import { BookDataType } from '../Data/bookDataHook';
 
 interface Props {
   panelPosition: { top: number; left: number };
@@ -9,7 +13,6 @@ interface Props {
   imagePanelRef: RefObject<HTMLDivElement>;
   recentImageNote: ImageSelection;
   notes: NoteSelection[];
-  setNotes: Dispatch<SetStateAction<NoteSelection[]>>;
 }
 
 export const ImagePanel = ({
@@ -18,8 +21,12 @@ export const ImagePanel = ({
   imagePanelRef,
   recentImageNote,
   notes,
-  setNotes,
 }: Props) => {
+  const book = useContext(BookContext);
+  const { dispatch, state } = useContext(BookDataContext);
+
+  const section = book.flow[state.pageIndex];
+
   return (
     <Affix
       style={{
@@ -36,9 +43,18 @@ export const ImagePanel = ({
           }
           onChange={(event) => {
             if (event.target.checked) {
-              setNotes((notes) => [...notes, recentImageNote]);
+              dispatch({
+                type: BookDataType.update_notes,
+                payload: { id: section.id, notes: [...notes, recentImageNote] },
+              });
             } else {
-              setNotes(notes.filter((note) => compareNote(note, recentImageNote) !== 0));
+              dispatch({
+                type: BookDataType.update_notes,
+                payload: {
+                  id: section.id,
+                  notes: notes.filter((note) => compareNote(note, recentImageNote) !== 0),
+                },
+              });
             }
           }}
           style={{ background: 'white', padding: '.5rem' }}>

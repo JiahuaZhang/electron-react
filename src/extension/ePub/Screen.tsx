@@ -20,7 +20,7 @@ import { ConfigContext } from './Configuration/configContext';
 import { BookDataContext } from './Data/bookDataContext';
 import { useBookData } from './Data/bookDataHook';
 import { NotesPanel } from './Panel/Notes/NotesPanel';
-import { NotesContext, useNotes } from './Panel/Notes/NotesHook';
+import { NoteProvider } from './Panel/Notes/NotesHook';
 
 const { Header, Content, Sider } = Layout;
 
@@ -30,7 +30,7 @@ interface Props {
 }
 
 export const Screen: React.FC<Props> = ({ book, discard }) => {
-  const [activePanel, setActivePanel] = useState('tableOfContents');
+  const [activePanel, setActivePanel] = useState('notes');
   const [showPanel, setShowPanel] = useState(false);
   const sider = useRef<HTMLDivElement>(null);
   const [selectedKeys, setSelectedKeys] = useState(['']);
@@ -38,7 +38,6 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   const changingSiderWidth = useRef<Subscription>(new Subscription());
   const epubConfig = useConfig();
   const bookData = useBookData(book);
-  const bookNotes = useNotes();
 
   useEffect(() => {
     const onMouseUp = () => changingSiderWidth.current.unsubscribe();
@@ -136,9 +135,9 @@ export const Screen: React.FC<Props> = ({ book, discard }) => {
   return (
     <ConfigContext.Provider value={epubConfig}>
       <BookContext.Provider value={book}>
-        <NotesContext.Provider value={bookNotes}>
-          <BookDataContext.Provider value={bookData}>{result}</BookDataContext.Provider>
-        </NotesContext.Provider>
+        <BookDataContext.Provider value={bookData}>
+          <NoteProvider>{result}</NoteProvider>
+        </BookDataContext.Provider>
       </BookContext.Provider>
     </ConfigContext.Provider>
   );

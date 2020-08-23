@@ -12,8 +12,9 @@ export const getAdjustedNodePath = (
   child: Node,
   offset: number
 ): [number[], number] => {
-  if (parent.firstChild?.nodeName === 'SPAN') {
-    let current_node = parent.firstChild;
+  const childNodes = Array.from(parent.childNodes);
+  if (childNodes.some((node) => node.nodeName === 'SPAN')) {
+    let current_node = parent.firstChild as Node;
 
     while (!current_node.isEqualNode(child)) {
       if (current_node.contains(child)) {
@@ -46,18 +47,14 @@ export const getAdjustedNodePath = (
 export const getAdjustedNode = (parent: Node, path: number[], offset: number): [Node, number] => {
   let current = path.reduce((node, index) => node.childNodes[index], parent);
 
-  if (current.nodeName === 'SPAN') {
-    while (current.hasChildNodes() || offset > (current.textContent?.length as number)) {
-      if (offset <= (current.textContent?.length as number)) {
-        current = current.firstChild as Node;
-      } else {
-        offset -= current.textContent?.length as number;
-        current = current.nextSibling as Node;
-      }
+  while (current.hasChildNodes() || offset > (current.textContent?.length as number)) {
+    if (offset <= (current.textContent?.length as number)) {
+      current = current.firstChild as Node;
+    } else {
+      offset -= current.textContent?.length as number;
+      current = current.nextSibling as Node;
     }
-    return [current, offset];
   }
-
   return [current, offset];
 };
 

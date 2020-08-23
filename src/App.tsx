@@ -10,21 +10,21 @@ import { controller } from './extension/ePub/model/epub';
 
 const { Sider } = Layout;
 
-if (process.env.NODE_ENV !== 'production') {
-  const whyDidYouRender = require('@welldone-software/why-did-you-render');
-  whyDidYouRender(React, {
-    include: [
-      /Screen/,
-      /Book/,
-      /Section/,
-      /TableOfContents/,
-      /ConfigPanel/,
-      /FontFamily/,
-      /FontSizeConfig/,
-      /App/,
-    ],
-  });
-}
+// if (process.env.NODE_ENV !== 'production') {
+//   const whyDidYouRender = require('@welldone-software/why-did-you-render');
+//   whyDidYouRender(React, {
+//     include: [
+//       /Screen/,
+//       /Book/,
+//       /Section/,
+//       /TableOfContents/,
+//       /ConfigPanel/,
+//       /FontFamily/,
+//       /FontSizeConfig/,
+//       /App/
+//     ]
+//   });
+// }
 
 const App: React.FC = () => {
   const [state, setState] = useState<
