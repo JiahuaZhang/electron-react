@@ -61,7 +61,7 @@ const App: React.FC = () => {
     setState([
       { type: 'home', key: -1, content: <FolderPage fileHandlers={[ePub(getController)]} /> },
     ]);
-    ePub(getController).processor('/Users/jzhang016/Documents/Books/毛泽东选集-毛泽东.epub');
+    // ePub(getController).processor('/Users/jzhang016/Documents/Books/毛泽东选集-毛泽东.epub');
   }, []);
 
   const renderedContent = () => {

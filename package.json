@@ -25,14 +25,15 @@
     "typescript": "3.8.3"
   },
   "scripts": {
-    "react-start": "PORT=3006 react-scripts start",
+    "react-start": "cross-env PORT=3006 react-scripts start",
     "react-build": "react-scripts build",
     "react-test": "react-scripts test --env=jsdom",
     "react-eject": "react-scripts eject",
     "electron-build": "electron-builder",
     "release": "yarn react-build && electron-builder --publish=always",
     "build": "yarn react-build && yarn electron-build",
-    "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3006 && ELECTRON_DISABLE_SECURITY_WARNINGS=true electron .\"",
+    "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3006 && cross-env ELECTRON_DISABLE_SECURITY_WARNINGS=true electron .\"",
+    "temp": "cross-env ELECTRON_DISABLE_SECURITY_WARNINGS=true electron .",
     "clean": "rm -rf build dist",
     "analyze": "node analyze.js"
   },
