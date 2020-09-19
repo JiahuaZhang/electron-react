@@ -13,8 +13,7 @@ export const FolderPage: React.FC<Props> = ({ fileHandlers }) => {
   const [state, setState] = useState([
     {
       key: -1,
-      content: <Files directory="/Users/jiahu/Desktop" fileHandlers={fileHandlers} />,
-      // content: <Files directory="C:\Users\jiahu\Desktop\projects" fileHandlers={fileHandlers} />,
+      content: <Files directory="/Users/jzhang016/Documents/books" fileHandlers={fileHandlers} />,
     },
   ]);
   const key = useRef(0);
