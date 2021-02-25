@@ -15,12 +15,12 @@
     "cross-env": "^7.0.2",
     "electron-is-dev": "^1.2.0",
     "epub": "^1.1.0",
-    "node-sass": "^4.14.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-file-icon": "^0.2.0",
     "react-scripts": "^3.3.0",
     "rmdir": "^1.2.0",
+    "sass": "^1.32.8",
     "styled-components": "^5.1.0",
     "typescript": "3.8.3"
   },

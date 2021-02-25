@@ -359,6 +359,10 @@ export const Section: React.FC<Props> = () => {
       ref={wrapperRef}
       style={{ position: 'relative', backgroundColor: 'white' }}
       onClick={(event) => {
+        if (showImagePanel) {
+          setshowImagePanel(false);
+          return;
+        }
         closeShowPanel(event);
         clickHighlight(event);
         closeImagePanel(event);
